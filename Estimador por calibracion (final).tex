@@ -1,0 +1,1843 @@
+%Documento e idioma
+\documentclass[a4paper,twoside,openright,12pt]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\decimalpoint
+\selectlanguage{spanish}
+	\newcommand{\titulo}{Estimador por calibración}
+	\newcommand{\subtitulo}{Problemas en su implementación y propuestas de soluciones}
+	\newcommand{\autor}{Víctor Miguel García Sánchez}
+%Para símbolos de matemáticas
+\usepackage{amsmath, amsfonts, amsthm}
+\usepackage{amssymb}
+\usepackage{hyperref}			%Para enlaces
+\usepackage{pdfpages}	
+\usepackage{tikz}				%Para trazar figuras
+\usepackage{enumitem}		%Para enumerar
+\usepackage{appendix}			%Para el índice
+\usepackage{tocbibind}		%Para incluir el índice en el índice
+\usepackage{listings}			%Para incluir código
+\usepackage{sectsty}			%Para el estilo en las secciones
+\usepackage{epigraph}			%Para la cita al inicio
+\usepackage[most]{tcolorbox}	%Para las cajas de ejemplos
+\usepackage[authoryear]{natbib}
+%Para fechas
+\usepackage{datetime}
+\newdateformat{monthyeardate}{%
+\monthname[\THEMONTH], \THEYEAR}
+%\allsectionsfont{\centering \normalfont\scshape}
+%Para los ``pie de página'' que no van al pie
+\usepackage{pagenote}
+\makepagenote
+% Para los índices de figuras y tablas
+\usepackage[font=small,labelfont=bf]{caption}
+%Estílo de las páginas y nombres en títulos y secciones
+\usepackage{lmodern}
+\usepackage{titlesec}
+\usepackage{microtype}
+%Márgenes
+\topmargin=-1cm
+\oddsidemargin=0.3cm
+\textwidth=14cm
+\textheight=24cm
+%Define el color del estilo de las páginas
+\definecolor{myblue}{RGB}{0,82,155}
+%Estilo Fancy. Inicia los capítulos en páginas impares y si debe rellenar una página blanca, dejarla completamente blanca, sin numeración
+\usepackage{fancyhdr}
+\pagestyle{fancy}%headings
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}%Ancho de líneas en cabecera
+\renewcommand{\footrulewidth}{0pt}%y pie de páginas--No cuentan las de inicio de capítulo
+\setlength{\headheight}{13.6pt}
+		%Define comando para el estilo de números de página
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,fill=myblue,inner sep=2pt] (char) {#1};}}
+%Los pies de página generales
+\fancyfoot[LE,RO]{\circled{\color{white}\thepage}}
+%Empieza en página par los capítulos
+\makeatletter
+\renewcommand*{\cleardoublepage}{\clearpage\if@twoside \ifodd\c@page\else
+\hbox{}%
+\thispagestyle{empty}%
+\newpage%
+\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother
+%estilo de los titulos en los capítulos
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{myblue}}
+  {\filleft%
+    \begin{tikzpicture}
+    \node[
+      outer sep=0pt,
+      text width=3cm,
+      minimum height=3cm,
+      fill=myblue,
+      font=\color{white}\fontsize{80}{90}\selectfont,
+      align=center
+      ] (num) {\thechapter};
+    \node[
+      rotate=90,
+      anchor=south,
+      font=\color{black}\Large\normalfont
+      ] at ([xshift=-5pt]num.west) {\textls[180]{\textsc{\chaptertitlename}}};  
+    \end{tikzpicture}%
+  }
+  {10pt}
+  {\titlerule[2.5pt]\vskip3pt\titlerule\vskip4pt\LARGE\sffamily}
+%Estilo de número página para los inícios de capítulo
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[R]{\circled{\color{white}\thepage}}
+  \renewcommand{\headrulewidth}{0pt}
+}
+%Estilo de linea de pie de página
+\renewcommand{\footnoterule}{%
+  \kern -3pt
+  \color{myblue}\hrule width 5.5cm height 1pt
+  \kern 2pt
+}
+		%estilo de las notas de página--- recordar que se insertan a mano
+\renewcommand*{\notedivision}{}
+\renewcommand*{\pagenotesubhead}[2]{}
+\renewcommand{\noteidinnotes}[1]{\scriptsize[#1]}
+\renewcommand{\noteinnotes}[1]{{#1}\normalsize}
+\renewcommand{\thepagenote}{\Roman{pagenote}}
+%Definición de comandos
+\usepackage{dsfont}
+\def\one{\mathds{1}}%Definición de la función indicadora
+
+\newtheorem{theorem}{Teorema}
+\newtheorem{lemma}{Lema}
+\newtheorem{Corollary}{Corolario}
+\newtheorem*{remark}{Observación}
+\renewcommand\qedsymbol{$\blacksquare$}
+\newtheorem{solution}{Solución}
+\newtheorem{Definition}{Definición}
+\newtheorem*{solution*}{Solución}
+\theoremstyle{definition}
+\newtheorem{dfn}{Definición}[section]
+\newcounter{example}[section]%Define el ambiente example
+\newenvironment{example}[1]
+    {\begin{tcolorbox}[arc=0mm,breakable, enhanced, colframe=myblue ,colback = myblue!20]
+    		\refstepcounter{example}\par\noindent \textbf{Ejemplo~ \theexample.} \rmfamily#1}
+    {
+    	\end{tcolorbox}
+    }
+\newenvironment{notacion}{\textbf{Notación:}}{}{}%Lo uso realmente?
+\newcommand{\citeOne}[1]{\hyperlink{bib}{#1}}
+\renewcommand\spanishtablename{Tabla}
+%Paréntesis a las referencias a ecuaciones
+\newcommand\pref[1]{(\ref{#1})}
+		%estilo del resumen
+\fancypagestyle{style2}{
+\fancyhead[C]{\sffamily\Large \color{myblue}
+    \textbf{\titulo}\\
+    \vspace{0.3cm}
+    \large
+    \subtitulo\\
+    \vspace{0.3cm}
+    \textbf{\autor}}
+}
+%estilo de los títulos de las secciones
+\titleformat{\section}
+  {\flushleft \large\color{myblue}}
+  {\normalfont \bfseries \thesection}
+  {10pt}
+  {\large\bfseries \sffamily}
+%estilo de los títulos de las subsecciones
+\titleformat{\subsection}
+  {\flushleft \large \color{myblue}}
+  {\normalfont \bfseries \thesubsection}
+  {10pt}
+  {\large \bfseries \sffamily}
+%Comandos a redefinir para el idioma
+\renewcommand{\appendixtocname}{List of appendices}
+\renewcommand{\appendixname}{List of appendices}
+\addto\captionsspanish{
+  \renewcommand{\listtablename}{Índice de tablas}
+  \renewcommand{\appendixpagename}{\thispagestyle{empty} \bfseries \sffamily \color{myblue} Anexos}
+}
+\renewcommand{\refname}{Bibliografía}
+%Para citas epigráficas
+\makeatletter
+\renewcommand{\@epirule}{{\color{myblue}\rule[.5ex]{\epigraphwidth}{\epigraphrule}}}
+\makeatother
+%Comandos sobre lineas
+\setlength{\parindent}{0pt}
+\newcommand{\myrule}[3][black]{\textcolor{myblue}{\rule{#2}{#3}}}
+\newcommand{\Hlines}[1]{\myrule{#1}{0.5pt}\vspace{-6pt} \myrule{#1}{3pt}\vspace{-7pt} \myrule{#1}{1pt}\vspace{-6pt} \myrule{#1}{4pt}\\}
+\newcommand{\Vlines}[1]{\hspace{0.45cm}\myrule{0.5pt}{#1} \myrule{3pt}{#1} \myrule{1pt}{#1} \myrule{4pt}{#1}}
+%Configuración de los links
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	urlcolor=myblue,
+	citecolor=myblue,%black
+	pdftitle=\titulo: \subtitulo, 
+	pdfauthor=\autor,
+	pdfsubject=Tesis de Licenciatura,
+	pdfkeywords={ponderadores, calibración, información auxiliar, consistencia, inferencia basada en diseño, estimador por regresión, no respuesta, diseño de muestreo complejo}
+}
+\newcommand\invisiblesection[1]{
+	\refstepcounter{section}
+	\addcontentsline{toc}{section}{\protect\numberline{\thesection}#1}
+	\sectionmark{#1}}
+%Para insertar código de R con acentos incluidos
+\lstset{language=R,
+	extendedchars=true,
+	basicstyle=\ttfamily,
+	keywordstyle=\color{myblue}\ttfamily,
+	commentstyle=\color{gray}\ttfamily,%green
+	frame=single, 
+	breaklines=true,
+	literate=%
+		{á}{{\'a}}1
+		{é}{{\'e}}1
+		{í}{{\'i}}1
+		{ó}{{\'o}}1
+		{ú}{{\'u}}1
+		{ñ}{{\~n}}1
+}
+%Para tablas con datos numéricos
+\usepackage{amstext} % for \text macro
+\usepackage{array}   % for \newcolumntype macro
+\newcolumntype{C}{>{$}c<{$}} % math-mode version of "c" column type
+\newcolumntype{L}{>{$}l<{$}} % math-mode version of "l" column type
+\usepackage{siunitx}%para alinear
+%Para tablas estilizadas
+\usepackage{tabularx}
+\usepackage{colortbl}
+\tcbuselibrary{skins}
+\tcbset{tab2/.style={	enhanced,
+					colback=myblue!10!white,
+					colframe=myblue!50!black,
+					colbacktitle=myblue!40!white,
+					coltitle=myblue,center title}}
+%Para Anexos
+\renewcommand{\appendixname}{Anexos}
+\renewcommand{\appendixtocname}{Anexos}
+\renewcommand{\appendixpagename}{Anexos}
+%Para numerar las ecuaciones, figuras, tablas, teoremas y lemas por capítulo
+\numberwithin{equation}{chapter}
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+\numberwithin{theorem}{chapter}
+\numberwithin{lemma}{chapter}
+%Título								%quitar?
+\title{
+	\normalfont\normalsize
+	\textsc{Universidad de Guanajuato}\\
+	\textsc{Departamento de Matemáticas}\\[25pt]
+	\textcolor{myblue}{\myrule{\linewidth}{0.5pt}} \\[0.4cm]
+	\huge \titulo\\
+	\normalsize \subtitulo
+	    	\begin{center}
+    	\end{center}
+	\textcolor{myblue}{\myrule{\linewidth}{2pt}} \\[0.5cm]
+}
+\author{\autor}
+\date{\normalsize\today}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%                                                    %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%        Inicia el documento      %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%                                                    %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\pagenumbering{roman}%Inicia con romanos la numeración de secciones introductorias
+%%%%%%%%%%%%%%%%   Portada de la tesis  %%%%%%%%%%%%%%%%%%%
+\thispagestyle{empty}%Sin estilo de página, hace una portade de tesis
+	\begin{tabular}{ m{4cm}  m{11cm}}
+	\begin{minipage}{.3\textwidth}
+		\includegraphics[scale=0.35]{ugto.jpeg}\end{minipage}& \Hlines{115mm}\\
+	\Vlines{217mm}&
+		\begin{center}\Huge{\titulo}\\ \normalsize \subtitulo \\[7pc]\end{center}
+		\huge{TESIS}\vspace{1cm}
+		
+		\small{Que para obtener el título de}\newline
+		\normalsize\Large{\textbf{Licenciado en Matemáticas}}\newline
+		PRESENTA: \newline
+		\Large{\textbf{\autor}}\newline
+		\vfill
+		\noindent Director de tesis:\newline
+		Dr. José Elías Rodríguez Muñoz
+		
+		\vspace{5cm}
+		\large{Guanajuato, Gto. \hspace{3cm} \monthyeardate\today}
+\end{tabular}
+\normalsize%Vuelve a tamaño normal
+%%%%%%%%%%%%%%%%    Título de la tesis   %%%%%%%%%%%%%%%%%%%
+\maketitle
+\cleardoublepage
+%%%%%%%%%%%%%%%%%   Dedicatoria  %%%%%%%%%%%%%%%%%%%%%
+\thispagestyle{empty}
+\begin{flushright}
+	\vspace*{\fill}
+		\textit{Dedicado a mi familia, amigos y maestros:\\
+				todos aquellos que me formaron.}
+	\vspace*{\fill}
+\end{flushright}
+%%%%%%%%%%%%%%%%%%   Índice  %%%%%%%%%%%%%%%%%%%%%%%
+\tableofcontents
+%%%%%%%%%%%%%  ``Capítulo'' de agradecimientos  %%%%%%%%%%%%%%%
+% *si no queremos que añada la palabra "Capitulo"
+\chapter*{Agradecimientos} 
+ %%%%Despues de indice general
+\addcontentsline{toc}{chapter}{Agradecimientos} % si queremos que aparezca en el índice
+A Dios, por haberme permitido llegar hasta este punto. Por brindarme salud, amor, paciencia y oportunidades, pues por su infinita bondad he alcanzado cuanto tengo, sabiendo ver las puertas que abría frente a mi.\\
+
+A mis padres, pues más allá de mi educación en casa y todas sus contribuciones para mi formación escolar, sembraron en mi algo que atesoraré toda la vida: Que en la vida no hay tareas demasiado pequeñas ni demasiado grandes para mis capacidades, y que gracias a personas como ellos, seré capaz de aprender a llevarlas a cabo para no esperar que alguien más las haga.\\
+
+A mi hermana, por ser para mi siempre una de las personas que más admiro, por inspirarme a ser el mejor ejemplo a seguir que pueda. Por su tenacidad y perseverancia en la escuela y en la vida, que la han vuelto para mi un rival que me presiona a seguir mejorando.\\
+
+A mi novia, por ponerme los pies sobre la tierra y recordarme constantemente que aún en la carrera de matemáticas, hay asuntos no matemáticos que no debo descuidar. Por su apoyo en las primeras revisiones de redacción y sobre todo, por no soltarme la mano cuando la situación se ponía difícil, en especial cuando era yo quien la volvía difícil.\\
+
+A mis amigos, %Ramón, Dennis, Gerardo, Daniel, Ceci, etc. en fin, a todos ellos,
+por cada vez que me contestaron una llamada, cada invitación a comer, cada noche de hospedaje, cada abrazo, cada lágrima a su lado, pues esos momentos nos volvieron esa familia que como foráneos hace tanta falta. Por cada problema que resolvimos juntos, cada desmañanada y cada discusión, todo lo que me hizo sentir que no estaba solo en la carrera y que había más personas en la misma situación que yo.\\
+
+A mis maestros, por brindarme los conocimientos y la formalidad necesarios en un matemático. Por mostrarme lo que es ir a la escuela realmente, pues tras los amargos tragos de la educación básica, fueron ellos quienes con tanta pasión por enseñar lo que a ellos les apasiona, me mostraron como es el proceso de aprendizaje cuando de verdad te gusta cada aspecto de lo que aprendes.\\
+
+A mi asesor y a mis tutores de la licenciatura y la maestría, por ser para mi guías en cada paso. Por exigirme trabajar a tal ritmo de trabajo y asegurarse que lo cumpliera. Por orillarme a hacerme tantas preguntas y apoyarme más allá de este trabajo final.
+%%%%%%%%%%%%%%%%%%   Resumen  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+\thispagestyle{style2}
+La estimación de los totales de variables obtenidas en encuestas siempre ha sido de gran interés. En ocasiones, el no contar con información completa al final de la encuesta o desear predecir un total antes de contar con las respuestas de la población entera, nos lleva a tomar una muestra con información completa y, para evitar la sobrerrepresentación, calcular un total ponderado de la variable de interés para obtener una buena estimación.
+
+Los ponderadores más utilizados, entre cuyas aplicaciones destaca la estimación de totales, son los inversos de las probabilidades de inclusión en la muestra, llamados también \textsl{factores de expansión}. Su uso se debe a que brindan una estimación insesgada, sin embargo, el error cuadrático medio (ECM) obtenido con tales estimaciones suele ser muy grande.
+
+Una manera de reducir el ECM es la incorporación de información auxiliar para ajustar simultáneamente los ponderadores. Tal información está conformada por los totales de variables auxiliares. A los ponderadores obtenidos los denominamos \textsl{ponderadores calibrados}, que son lo más cercanos posibles a los iniciales bajo ciertas restricciones impuestas por dichos totales.
+
+Éstas restricciones son que al calcular los totales de las variables auxiliares, usando los ponderadores calibrados, se obtengan los totales conocidos para dichas variables.
+%Imaginemos que estamos en un edificio de varios pisos. El elevador tiene un límite superior de peso y si contamos con un sistema que pregunte su peso solo a algunos de los que lo abordarán, es posible estimar el peso total del grupo.
+
+%Para ello contamos con información auxiliar, que al elegirse correctamente nos permitirá obtener un estimador insesgado del peso total. Si promediamos de manera usual el peso de las personas de la muestra encuestada y multiplicamos tal promedio por la cantidad de personas del grupo, tal estimación se ve influenciada por las personas de la muestra.
+
+%Si seleccionamos en la muestra mayormente personas con sobrepeso, el estimador sobreestimará el total, si seleccionamos niños, el estimador subestimará el total. El primer paso para disminuir éste efecto es ponderar a los individuos del grupo, pues al considerar por ejemplo la mitad de los pesos de las personas con sobrepeso o el triple del peso de los más pequeños, es posible reducir el sesgo de la estimación.
+%%%%%%%%%%%%%%%   índices de figuras y tablas  %%%%%%%%%%%%%%%%%
+\listoffigures
+\listoftables
+%%%%%%%%%%%%%%%%%%  Introducción  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Introducción}
+\addcontentsline{toc}{chapter}{Introducción}
+\pagenumbering{arabic}% PROBAR \footnote{\cite[S. 203]{CIS-427247@year}}
+\epigraph{\textsl{El muestreo no es una mera sustitución de una cobertura parcial a la totalidad.}}{\textit{\textbf{William Edwards Deming}\\ Some Theory of Sampling(1950)}}
+Pocas cosas son tan confusas para los investigadores aplicados como el rol de la ponderación de muestras\footnote{\cite{CIS-427247}}. La confusión se debe a la falta de claridad sobre cuál de los múltiples motivos potenciales de ponderación se aplica al proyecto de investigación en cuestión.
+
+Consideremos la tasa de pobreza de Estados Unidos en 1967, que oficialmente se midió en $13\% $ según la Encuesta de Población Actual organizada por el \citeOne{\color{myblue}U.S. Bureau }\cite{census}. Si se estima la tasa de pobreza de Estados Unidos en 1967 con la tasa de pobreza de la muestra completa del Panel Study of Income Dynamics (PSID) de 1968, sin ponderación alguna que ajuste la sobremuestra de bajos ingresos que caracteriza al PSID, el estimado sería de $26\%$.
+
+Sin embargo, uno puede lograr una estimación insesgada y consistente utilizando la tasa de pobreza ponderada de la muestra del PSID, ésto mediante el \textsl{estimador de Horvitz-Thompson}, que consiste en ponderar con los inversos de las probabilidades de selección, con la que resulta una tasa de pobreza del $12\%$, una estimación más razonable que $26\%$.
+
+Este ejemplo, ilustrado en \cite{solon}, se muestra un caso simple de la estimación de una media poblacional, en la que nos basamos en una muestra que sistemáticamente no representa a la población objetivo, pero puede representarla por ponderación.
+
+Utilizar como ponderadores a los inversos de las probabilidades de inclusión es lo más usual en la práctica, pues la estimación obtenida es insesgada. A pesar de tal ventaja, el Error Cuadrático Medio (\textsl{ECM}) y la varianza de las estimaciones para el anterior caso suele ser muy grande.
+
+Cuando conocemos los totales de algunas variables auxiliares, sean cuantitativas o categóricas, podemos cambiar los ponderadores por otros, lo más cercanos posibles a los iniciales y sujetos a que al utilizarlos para calcular los totales ponderados de las variables auxiliares en la muestra, éstos coincidan con los totales conocidos.
+
+A los ponderadores obtenidos, los llamamos \textsl{ponderadores por calibración} o \textsl{ponderadores calibrados}, el estimador obtenido con ellos está justificado por una relación de regresión de la variable de estudio con el vector formado por las variables auxiliares, como se describe en \cite{CIS-106196}.
+
+Aunque tal proceso suele reducir el ECM, también puede ocasionar problemas, en ocasiones asociados a la muestra\footnote{\cite{CIS-549814} pp. 2}. En el presente trabajo se describen algunos de esos problemas junto con algunas propuestas para solucionarlos.
+%%%%%%%%%%%%%%%%%%   Justificación  %%%%%%%%%%%%%%%%%%%%%%%
+\section*{Justificación}
+\addcontentsline{toc}{section}{Justificación}
+Mi motivación en éste trabajo se dio en el Seminario internacional sobre edición de datos, imputación y no respuesta, celebrado en la ciudad de Guanajuato, Gto. el 26 y 27 de octubre de 2017. En una de sus participaciones en dicho evento, Joseph L. Schafer mencionó que en ocasiones la imputación en bases de datos, además de introducir errores y brindar intervalos de confianza inválidos, no satisface los objetivos con que se diseñaron los instrumentos de recolección de información.
+
+Uno de los parámetros que más nos interesa obtener es el total de ciertas variables, sin importarnos realmente los valores de la misma para cada individuo de la población.
+
+La simulación de bases de datos puede llevar a obtener algunas correlacionadas de manera poco natural, al grado de obtener multicolinealidad entre las variables  de estudio y las variables auxiliares. Para evitar tal fenómeno se prefirió inicialmente el uso de bases de datos de encuestas reales, pues al contar con información real, no se tiene un modelo que pueda influir en el diseño de la estimación del total de interés.
+
+La base de datos de la \textsl{Encuesta Nacional de Ingresos y Gastos de los Hogares (ENIGH) 2016}\footnote{\cite{inegi}}, es de gran interés para la sociedad y organismos como el Consejo Nacional de Evaluación de la Política de Desarrollo Social (CONEVAL). Información como el ingreso corriente total o la inversión total en programas sociales son cantidades de gran relevancia en los ámbitos político y económico de nuestro país. Por ello que algunos parámetros de interés son estimados al final del presente trabajo con la finalidad de poner en práctica el uso del estimador por calibración, además de hacer mención de otras aplicaciones no tan directas de la estimación por calibración.
+%%%%%%%%%%%%%%%%%%   Antecedentes  %%%%%%%%%%%%%%%%%%%%%
+\section*{Antecedentes}
+\addcontentsline{toc}{section}{Antecedentes}
+%A continuación se revisa el desarrollo histórico del muestreo balanceado y del Método del Cubo, considerando su relación con estimadores de regresión.
+Para tener un contexto del desarrollo de la estimación por calibración, se expone un breve marco histórico de la estimación por calibración.
+
+En el artículo de \cite{CIS-289580} se realizó un ajuste mediante el método de mínimos cuadrados sobre la tabla de frecuencias del censo de población de 1940 para incorporar la información de totales conocidos.
+
+En dicho artículo, los autores utilizan un enfoque de regresión por mínimos cuadrados. Esto dio origen a la estimación por calibración. Al ser el método de regresión el más usado para distintos fines, entre los que no podría faltar la estimación de totales, se mantuvo el nombre de \textsl{estimación por regresión} por varios años.
+
+Es así como en \cite{CIS-549814}, la tesis doctoral de Huang, presentada en 1978, ya se hacía uso del método de calibración para la estimación de medias. En dicho documento, se refiere al estimador como \textsl{estimador por regresión} y a los ponderadores obtenidos en función de la información auxiliar los llama \textsl{ponderadores por regresión}.
+
+Aunque en dicha tesis desarrolla un algoritmo de computadora diseñado para calcular los ponderadores, el enfoque que aún se daba en esa época para la calibración, como ya se mencionó, fue usando el método de mínimos cuadrados, es decir, se limitaban al uso de la distancia $\chi$-cuadrada, como se puede verificar en \citet[sección IV.A]{CIS-549814}.
+
+Además en dicha tesis, \citeOne{Huang} menciona que al contar con muestras muy pequeñas o muestras no aleatorias, algunos de los ponderadores obtenidos pueden llegar a ser negativos. Los ponderadores negativos, con justa razón, son inaceptables para algunos usuarios, debido a que pueden llevar a producir estimados negativos de parámetros poblacionales que sabemos que son positivos.
+
+Autores como Särndal, Estevao, Deville y Wu popularizaron el tema; pues desde 1992 con el artículo de \cite{CIS-106196}, se ha vuelto un instrumento metodológico importante en la producción de estadísticas. Tanto es así, que se han desarrollado numerosos paquetes de software diseñado para calcular ponderadores calibrados basados en información auxiliar disponible en encuestas y registros de población. Por mencionar algunos nos encontramos con CALMAR, GES y CLAN97.
+
+La popularidad del tema se adjudica a que en el artículo mencionado se prueba que el estimador por calibración es asintóticamente equivalente al estimador por regresión generalizada. Además de tras comenzar, de manera arbitraria, con la distancia $\chi$-cuadrada, caracterizan la clase de distancias que cumplen el objetivo de mantener a los nuevos ponderadores cercanos a los iniciales.
+%%%%%%%%%%%%%%%%%%   Hipótesis  %%%%%%%%%%%%%%%%%%%%%%%
+\section*{Hipótesis}
+\addcontentsline{toc}{section}{Hipótesis}
+Lo que se espera, al proponer el método de estimación por calibración, es reducir el ECM de las estimaciones respecto al obtenido con las estimaciones de Horvitz-Thompson. Además de identificar, y de ser posible solucionar, distintos problemas que suelen presentarse en el proceso de estimación.
+%%%%%%%%%%%%%%%%%%   Objetivos  %%%%%%%%%%%%%%%%%%%%%%%
+\section*{Objetivos}%debería poner la sección de marco teórico, referencial, histórico etc?
+\addcontentsline{toc}{section}{Objetivos}
+La finalidad de este trabajo es evaluar la efectividad del estimador por calibración para reducir el error cuadrático medio de las estimaciones de totales, al tratarse de estimadores insesgados, se buscará mejorar otras características de las mismas. Determinar distintos tipos de problemas que se presentan al efectuar el proceso de calibración y proponer soluciones para resolverlos.
+%%%%%%%%%%%%%%%%   Objetivos generales   %%%%%%%%%%%%%%%%%%%
+\subsection*{Objetivos generales}
+\addcontentsline{toc}{subsection}{Objetivos generales}
+El objetivo general es evaluar de manera cuantitativa las ventajas de estimar totales poblacionales mediante el estimador por calibración y determinar los errores que se pueden presentar durante el proceso, así como identificar mecanismos de solución para los mismos.
+%%%%%%%%%%%%%%%%   Objetivos específicos   %%%%%%%%%%%%%%%%%%%
+\subsection*{Objetivos específicos}
+\addcontentsline{toc}{subsection}{Objetivos específicos}
+\begin{itemize}
+	\item Verificar las ventajas de la estimación por calibración por encima de la estimación de Horvitz-Thompson.
+	\item Identificar distintas problemáticas que se suelen presentar durante las estimaciones por calibración.
+	\item Exponer soluciones encontradas en la literatura para resolver las complicaciones que pueden presentarse.
+	\item Evaluar las ventajas y desventajas de tales soluciones.
+	\item Presentar propuestas propias de solución, incorporando lo mejor de las soluciones previas.
+\end{itemize}
+%%%%%%%%%%%%%%%%%%   Delimitación  %%%%%%%%%%%%%%%%%%%%%%
+\section*{Delimitación}
+\addcontentsline{toc}{section}{Delimitación}
+En este trabajo se simulan algunas bases de datos en las que se seleccionan muestras previamente elegidas para denotar algunos problemas que se presentan en el proceso de calibración. Tras presentar algunas propuestas de solución, se prueban en las bases de datos simuladas y posteriormente en la base de datos de la ENIGH 2016.
+
+Por simplicidad, se trabajará unicamente con variables cuantitativas en todos los casos.
+%%%%%%%%%%%%%%%    Estructura del documento   %%%%%%%%%%%%%%%%%
+\section*{Estructura del documento}
+\addcontentsline{toc}{section}{Estructura del documento}
+La presente tesis está formada por 4 capítulos, los cuales son: ¿Qué es la estimación por calibración?, Aspectos importantes de la calibración, Algunos problemas al calibrar y cómo evitarlos, Implementación y algunas aplicaciones del estimador por calibración. %verificar que el nombre de los capítulos quede bien
+Cada uno de ellos está dividido en secciones y éstas últimas en subsecciones. Llevan un orden específico, siempre tomando en cuenta que cada tema va ligado con la teoría desarrollada en los apartados anteriores.
+
+El primer capítulo de la tesis se divide en 5 secciones, comenzando por la definición del estimador por calibración, clave para comprender el resto del contenido, y tras mencionar las condiciones mínimas para efectuar la calibración, obtener los ponderadores calibrados. Al final del capítulo se hace uso del enfoque de regresión lineal para la estimación de totales con la finalidad de verlo como un caso particular de la calibración.
+
+El estudio de Aspectos importantes de la calibración corresponde al segundo capítulo. Se aborda el uso de otras distancias para determinar ponderadores calibrados y se estudian algunas medidas de tendencia y dispersión de las estimaciones. Además se estudian brevemente los aspectos computacionales involucrados en el cálculo de ponderadores, en los que se habla del uso de distintas distancias.
+
+El tercer capítulo corresponde a la parte central de la tesis: Algunos problemas al calibrar y como evitarlos. Se comienza estudiando algunas bases de datos obtenidas mediante la simulación de variables aleatorias con determinación controlada, sección en la que se exponen a manera de ejemplos distintos problemas que surgen en la calibración. Posteriormente se explican los tipos de problemas y se revisan las propuestas de solución encontradas en la bibliografía.
+
+En el capítulo final, con información de la base de datos de la ENIGH 2016, se implementa el método de calibración para realizar varias estimaciones del total de ingresos corrientes en hogares. Posteriormente se determinan sus medidas de tendencia y dispersión, con la finalidad de verificar en una base de datos real la hipótesis planteada.
+
+Además del uso del método de calibración para la estimación de totales, en el cuarto capítulo se estudia el uso del mismo para la estimación de cuantiles, calibración en diseños de muestreo multifase, proporciones entre distintos totales, etc.
+
+En el primer anexo se incluyen algunas demostraciones útiles para complementar el texto,  entre las que se incluye que el estimador de Horvitz-Thompson es insesgado, para contrastar con la dificultad de obtener un resultado análogo para el estimador por calibración. Lo siguientes anexos exponen los códigos utilizados para los ejemplos, estimaciones y otros cálculos efectuados para la realización del trabajo.
+
+Todo lo anterior hace de este texto una guía de consulta teórica y práctica para aprender el método de estimación por calibración y la identificación de motivos por los que se obtienen errores al usarlo, además de incluir posibles soluciones según sea el error presentado.
+%%%%%%%%%%%   ¿Qué es la estimación por calibración?    %%%%%%%%%%%%%%%
+\chapter{¿Qué es la estimación por calibración?}
+El método de \textbf{calibración} se refiere a lo siguiente:%define?
+\begin{enumerate}
+	\item El cálculo de ponderadores que agreguen información auxiliar y que estén restringidos por ciertas ecuaciones.
+	\item El uso de dichos ponderadores para calcular estimadores lineales de totales y otros parámetros finitos.
+	\item La obtención de \textbf{estimaciones por diseño casi insesgadas}, siempre que no haya respuestas incompletas y otros errores no muestrales.
+\end{enumerate}
+En la literatura, lo usual es que el término se refiera solo al primer inciso. En contraste con \cite{CIS-220496}, quien lo usa solo para el primero y el tercero, en este trabajo nos referiremos a \textbf{calibración} indistintamente a cualquiera de las tres aplicaciones anteriores.%aplicaciones
+
+Una motivación a la definición formal del tema es que se trata de un método de re-ponderación que se usa cuando contamos con variables (cualitativas o cuantitativas), con las que se desea realizar, conjuntamente, un ajuste sobre los ponderadores.
+
+Al utilizar como ponderadores a los inversos de las probabilidades de inclusión, la estimación de totales de variables de interés es \hyperlink{insesgada}{insesgada}. Tal estimador recibe el nombre de \textsl{estimador de Horvitz-Thompson}.
+
+Por otro lado, la estimación por calibración ajusta los ponderadores por nuevos que son llamados \textsl{ponderadores por calibración}, \textsl{ponderadores calibrados} o ponderadores finales. Los ponderadores calibrados proporcionan estimados consistentes con el diseño y que generalmente tienen un ECM menor que el del estimador de Horvitz-Thompson.
+
+\section{Condiciones mínimas para la estimación basada en diseño en muestreo de encuestas}\label{sec:1.1}
+Consideremos muestreos de una sola fase y sin no respuesta. En la práctica, condiciones así no son tan sencillas, sin embargo, la mayoría de artículos teóricos lo asumen.
+
+Tomemos un muestreo probabilístico $S$ de la población finita $U=\{1,2,\ldots,N\}$. El diseño de muestreo induce, para cada $k\in U$, una probabilidad de inclusión $\pi_k$, que conocemos, y que a su vez nos brinda un ponderador $d_k=\frac{1}{\pi_k}>1$.
+Nuestro objetivo es estimar el total
+$$t_y=\sum_{k\in U}y_k$$
+a partir del uso de información auxiliar, donde la variable de estudio $y$ puede ser continua o categórica.
+
+Definamos la variable aleatoria $S_k=\one_{S}(k)$\footnote{Podemos notar que $\mathbb E(S_k)=\pi_k$}, con la que obtenemos el estimador insesgado básico de diseño de $t_y$:
+\begin{align}\label{eq:3.1}
+	\hat{t}_{y_{HT}}=\sum_{k\in U} d_k y_kS_k,
+\end{align}
+el cual es ineficiente\footnote{Es decir, contando con la misma información se obtienen estimaciones menos precisas.} cuando contamos con variables auxiliares disponibles durante la fase de estimación, pues aún siendo insesgado, según los ponderadores de la muestra es usual obtener estimadores demasiado grandes o demasiado pequeños.
+
+La notación general para los vectores formados por las variables auxiliares es $\mathbf{x}_k$. Distingamos dos casos respecto a $\mathbf{x}_k$:
+\begin{enumerate}[label=\roman*]
+	\item \label{i}$\mathbf{x}_k$ es conocido para todo $k\in U$ (información auxiliar completa).
+	\item $\mathbf{x}_k$ (observado) para todo $k\in S$ y $\sum_{k\in U} \mathbf{x}_k$ (importado) son conocidos. Llamamos importado al vector de totales porque a veces se toma de una fuente de información ajena a la encuesta.
+\end{enumerate}
+El caso \ref{i} proporciona una libertad considerable en la estructuración del vector auxiliar $\mathbf{x}_k$. Por ejemplo, si $x_k$ es una variable continua con valor especificado para cada $k\in U$, entonces podemos considerar $x_k^2$ y otras funciones de $x_k$ para su consideración, porque los totales como $\sum_{k\in U} x_k^2$ y $\sum_{k\in U} \log x_k$ son fácilmente calculables. Si la relación con la variable de estudio $y$ no es lineal, puede ser una grave equivocación no tomar en cuenta totales conocidos, como el cuadrático o el logarítmico.
+
+A diferencia del estimador por regresión, del que hablaremos en la subsección \ref{sec:5.1}, el método por calibración no se refiere a algún modelo en específico.
+
+El material disponible para estimar el total poblacional $t_y=\sum_{k\in U} y_k$ es:
+\begin{enumerate}
+	\item Las variables observadas $y_k$ para todo $k\in S$.
+	\item Las ponderaciones de diseño $d_k=\frac{1}{\pi_k}$ para todo $k\in S$.
+	\item Los vectores de valores conocidos $\mathbf x_k$ para todo $k\in U$ (o los valores observados $\mathbf x_k$ para todo $k\in S$ y el total importado $\sum_{k\in U} \mathbf x_k$).
+\end{enumerate}
+Éstas condiciones fueron establecidas en \cite{CIS-106196}.
+\section{La distancia para calibrar}\label{sec:4.1}
+En éste método, se modifican los ponderadores iniciales $d_k$ por nuevos ponderadores $w_k$, determinados para ser ``cercanos'' a los $d_k$. Para ello definamos una función distancia $G_k:\mathbb{R}\times \mathbb{R}^{+}\rightarrow \mathbb{R}^{+}_{0}$ continuamente diferenciable respecto a $w$, estrictamente convexa y con derivada $\frac{\delta G_k(w,d)}{\delta w}=:g_k(w,d)$, tal que $g_k(d,d)=0$.
+
+Usualmente elegimos $G_k$ de manera que $g_k(w,d)=\frac{g\left(\frac{w}{d}\right)}{q_k}$, donde $g(\cdot)$ recibe un solo argumento, es continua y estrictamente creciente. Además $g$ satisface $g(1)=0$, $g'(1)=1$ y los $q_k$ son factores de escala positivos.
+
+Para terminar este preámbulo, definamos $F(u)=g^{-1}(u)$, la función inversa de $g(\cdot)$.
+\section{Definición del modelo}
+Deseamos estimar el total desconocido
+\begin{align}\label{eq:4.1}
+	t_y=\sum_{k\in U}y_k.
+\end{align}
+Es así como a partir de conocer el estimador del estimador de Horvitz-Thompson \pref{eq:3.1}, el estimador por calibración es
+\begin{align}\label{eq:4.c}
+	\hat t_{y_{cal}}=\sum_{k\in U} w_k y_kS_k,
+\end{align}
+donde los $w_k$ son tales que minimizan $\sum_{k\in U}G_k(w_k,d_k)S_k$,
+sujetos a 
+$$\sum_{k\in U} w_k \mathbf{x}_kS_k=\sum_{k\in U}\mathbf{x}_k=:t_{\mathbf{x}}.$$
+\section{Determinación de los ponderadores calibrados $w_k$}\label{sec:4.3}
+Definamos el Lagrangiano
+\begin{align*}
+	\mathcal{L}(d,w,\mathbf{\lambda})&=\sum_{k\in U}G_k(w_k,d_k)S_k-\mathbf{\lambda}^T \left(\sum_{k\in U} w_k \mathbf{x}_kS_k-t_{\mathbf{x}} \right).
+	\intertext{Las derivadas parciales del Lagrangiano respecto a cada $w_k$ son}
+	\frac{\partial \mathcal{L}(d,w,\lambda)}{\partial w_k}&=g_k(w_k,d_k)S_k- \mathbf{\lambda}^T \mathbf{x_k}S_k.
+	\intertext{Cuando $g_k$ es de la forma descrita en la sección \ref{sec:4.1},}
+		\frac{\partial \mathcal{L}(d,w,\lambda)}{\partial w_k}&=\frac{g\left(\frac{w_k}{d_k}\right)}{q_k}S_k- \mathbf{\lambda}^T \mathbf{x_k}S_k.
+\end{align*}
+Para los $k\in S$ tenemos que, de existir tal $\mathbf{\lambda}$, cuando igualamos a $0$ para optimizar,
+\begin{align*}
+	\frac{\partial \mathcal{L}(d,w,\lambda)}{\partial w_k}&=0\\
+\Leftrightarrow\frac{g\left(\frac{w_k}{d_k}\right)}{q_k}-\mathbf{\lambda}^T \mathbf{x_k}&=0\\
+\Leftrightarrow\frac{g\left(\frac{w_k}{d_k}\right)}{q_k}&=\mathbf{\lambda}^T \mathbf{x_k}\\
+\Leftrightarrow g\left(\frac{w_k}{d_k}\right)&=q_k\mathbf{\lambda}^T \mathbf{x_k}\\
+\Leftrightarrow \frac{w_k}{d_k}&=F\left(q_k\mathbf{\lambda}^T \mathbf{x_k}\right)
+\end{align*}
+y por ello
+\begin{align}\label{eq:4.2}
+	w_k&=d_kF(q_k\mathbf{\lambda}^T \mathbf{x_k}).
+\end{align}
+Por las condiciones pedidas, las $w_k$ obtenidas minimizan $\sum_{k\in U}G_k(w_k,d_k)S_k$ y, como demuestran \cite{CIS-106196}, son únicas. También en palabras de \citeauthor{CIS-106196}, el estimador obtenido está justificado por una relación de regresión entre la variable de interés $y$ y el vector de variables auxiliares $\mathbf{x}$.
+\section{Acerca de la existencia de $\mathbf{\lambda}$}
+Para exponer la plausibilidad del método de calibración es necesario hablar sobre la existencia de $\mathbf{\lambda}$, que en la sección \ref{sec:4.3} solo supusimos. En la siguiente subsección estudiaremos la aplicación de un modelo con el que estamos familiarizados, el de regresión lineal, para la estimación de totales y la manera en que podemos expresar tal estimación en términos de estimación por calibración.
+\subsection{Un caso especial: El estimador por regresión}\label{sec:5.1}%generalizada???
+Con la misma notación, tenemos el objetivo de estimar el total desconocido
+\begin{align*}
+	t_y=\sum_{k\in U}y_k
+\end{align*}
+a partir de conocer $(y_k, \mathbf{x}_k)$ para todos los $k\in S$ y contar con la información auxiliar completa.
+
+El estimador de mínimos cuadrados de $y$ bajo el modelo
+\begin{align}\label{eq:5.1a}
+	y_k=B^T_{ols} \mathbf{x}_k+\sigma_k\epsilon_k,
+\end{align}
+usando para estimar solo los elementos de la muestra, está dado por
+\begin{align}
+\hat{B}_{ols}&=\left(\sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2} \right)^{-1}\left(\sum_{k\in U} \frac{\mathbf{x}_ky_kd_kS_k}{\sigma_k^2} \right)
+\end{align}
+Así que podemos expresar la ecuación \pref{eq:4.1} mediante
+\begin{align*}
+	t_y	&=\sum_{k\in U}\left( \hat B^T_{ols} \mathbf{x}_k+\sigma_k\epsilon_k\right) \\
+		&=\hat B^T_{ols}\sum_{k\in U}\mathbf{x}_k+ \sum_{k\in U}\sigma_k\epsilon_k,
+		\intertext{lo cual podemos reescribir como}
+		&=\hat B^T_{ols}t_{\mathbf x}+t_{\sigma\epsilon}.
+\end{align*}
+A su vez, como
+\begin{align*}
+	t_{\sigma\epsilon}&=\sum_{k\in U} \sigma_k\epsilon_k\\
+				&=\sum_{k\in U}(y_k-\hat B^T_{ols}\mathbf x_k)
+	\intertext{el cual es posible estimar mediante}
+\hat t_{\sigma\epsilon_{HT}}&=\sum_{k\in U}d_k(y_k-\hat B^T_{ols}\mathbf x_k)S_k\\
+				&=\sum_{k\in U}d_ky_kS_k-\sum_{k\in U}d_k\hat B^T_{ols}\mathbf x_kS_k\\
+				&=\sum_{k\in U}d_ky_kS_k-\hat B^T_{ols} \sum_{k\in U}d_k\mathbf x_kS_k\\
+				&=\hat t_{y_{HT}}-\hat B^T_{ols}\hat t_{\mathbf x_{HT}}
+\end{align*}
+Entonces el estimador para $t_y$, siguiendo el método de mínimos cuadrados es:
+\begin{align*}
+	\hat t_{y_{ols}}&=\hat B^T_{ols}t_{\mathbf x}+\hat t_{y_{HT}}-\hat B^T_{ols}\hat t_{\mathbf x_{HT}}\\
+				&=\hat t_{y_{HT}}+\hat B^T_{ols}\left(t_{\mathbf x}-\hat t_{\mathbf x_{HT}}\right)
+\end{align*}
+En \cite{CIS-549814}, tal expresión es llamada \textsl{estimador por regresión}. Veamos que es posible interpretar este estimador como uno obtenido mediante el método de calibración, pues al escribir lo anterior de la forma
+%Poner en un minipage o en un cuadrado al estilo de los ejemplos?
+\begin{align*}
+	\hat t_{y_{ols}}&=\hat t_{y_{HT}}+\hat B^T_{ols}\left(t_{\mathbf x}-\hat t_{\mathbf x_{HT}}\right)\\
+				&=\hat t_{y_{HT}}+\left[\left(\sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2} \right)^{-1}\left(\sum_{k\in U} \frac{\mathbf{x}_ky_kd_kS_k}{\sigma_k^2} \right)\right]^T\left(t_{\mathbf x}-\hat t_{\mathbf x_{HT}}\right)\\
+				&=\hat t_{y_{HT}}+\left\{\left[\left(\sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2} \right)^{-1}\left(\sum_{k\in U} \frac{\mathbf{x}_ky_kd_kS_k}{\sigma_k^2} \right)\right]^T\left(t_{\mathbf x}-\hat t_{\mathbf x_{HT}}\right)\right\}^T
+				\intertext{El paso anterior es posible al considerar al resultado escalar como una matriz de $1\times1$, que es simétrica. Al usar una propiedad de la transpuesta,}
+				&=\hat t_{y_{HT}}+\left(t_{\mathbf x}-\hat t_{\mathbf x_{HT}}\right)^T\left(\sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2} \right)^{-1}\left(\sum_{k\in U} \frac{\mathbf{x}_ky_kd_kS_k}{\sigma_k^2} \right)
+\end{align*}
+Definamos ahora
+\begin{align}\label{eqn:5.2}
+	\mathbf{\lambda}=\left(\sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2} \right)^{-1}\left(t_{\mathbf x}-\hat t_{\mathbf x_{HT}}\right)
+\end{align}
+%¿-T está definido?
+Con lo que
+\begin{align*}
+	\hat t_{y_{ols}}&=\hat t_{y_{HT}}+\mathbf{\lambda}^T \left( \sum_{k\in U}\frac{\mathbf{x}_ky_kd_kS_k}{\sigma_k^2}\right) \\
+				&=\hat t_{y_{HT}}+\sum_{k\in U}\mathbf{\lambda}^T\frac{\mathbf{x}_ky_kd_kS_k}{\sigma_k^2}
+				\intertext{al reordenar los escalares,}
+				&=\sum_{k\in U}d_ky_kS_k+\sum_{k\in U}d_k\frac{1}{\sigma_k^2}\mathbf{\lambda}^T\mathbf{x}_ky_kS_k\\
+				&=\sum_{k\in U}d_k\left(1+\frac{1}{\sigma_k^2}\mathbf{\lambda}^T\mathbf{x}_k\right)y_kS_k
+\end{align*}
+Definamos $G_k(w_k,d_k):=\frac{\sigma_k^2}{2d_k}\left(w_k-d_k\right)^2$, la distancia $\chi$-cuadrada, con lo que $g_k(w_k,d_k)=\frac{\sigma_k^2}{d_k}\left(w_k-d_k\right)$. Así que $q_k:=\frac{1}{\sigma_k^2}$ y $g\left(\frac{w_k}{d_k}\right):=\frac{w_k}{d_k}-1$, con inversa $F(u)=1+u$.
+
+De la ecuación \pref{eq:4.2}, podemos ver que bajo las condiciones anteriores, podemos tomar
+$$w_k=d_kF\left(q_k\mathbf{\lambda}^T\mathbf{x}_k\right)$$
+y con ello
+$$\hat t_{y_{ols}}=\sum_{k\in U}w_ky_kS_k$$
+Con lo que obtuvimos $\hat t_{y_{ols}}$ en forma de estimador por calibración.
+
+Como pudimos ver, tal elección de $G_k$ satisface las condiciones pedidas en la sección \ref{sec:4.1} y los ponderadores $w_k$, inducidos por el uso de dicha distancia, brindan la estimación del total $\hat t_{y_{ols}}$. Sin embargo, también es necesario verificar que los ponderadores calibrados satisfacen las ecuaciones de calibración.
+
+\begin{lemma}
+	Los ponderadores $w_k=d_k\left(1+\frac{1}{\sigma_k^2}\mathbf{\lambda}^T\mathbf{x}_k\right)$ satisfacen las ecuaciones
+	$$\sum_{k\in U}w_k \mathbf{x}_kS_k=t_{\mathbf{x}}$$
+\end{lemma}
+\begin{proof}
+\begin{align*}
+	\sum_{k\in U}w_k \mathbf{x}_kS_k&=\sum_{k\in U}d_k\left(1+\frac{1}{\sigma_k^2}\mathbf{\lambda}^T\mathbf{x}_k\right) \mathbf{x}_kS_k\\
+			&=\sum_{k\in U} d_k \mathbf{x}_kS_k+\sum_{k\in U}d_k \frac{1}{\sigma_k^2}(\mathbf{\lambda}^T\mathbf{x}_k)\mathbf{x}_kS_k
+			\intertext{Considerando la matriz $\mathbf{\lambda}^T\mathbf{x}_k$, de $1\times 1$, como un escalar, que al igual que $d_k$ y $S_k$, puede conmutar con el resto de factores,}
+	\sum_{k\in U}w_k \mathbf{x}_kS_k&=\sum_{k\in U} d_k \mathbf{x}_kS_k+\sum_{k\in U}\frac{1}{\sigma_k^2}\mathbf{x}_k d_k S_k(\mathbf{\lambda}^T\mathbf{x}_k)
+			\intertext{Considerando ahora que $\lambda^T\mathbf x _k$ es simétrica,}
+			&=\sum_{k\in U} d_k \mathbf{x}_kS_k+\sum_{k\in U}\frac{1}{\sigma_k^2}\mathbf{x}_k d_k S_k(\mathbf{x}^T_k \mathbf{\lambda})\\
+			&=\sum_{k\in U} d_k \mathbf{x}_kS_k+\sum_{k\in U}\frac{1}{\sigma_k^2}\mathbf{x}_k \mathbf{x}^T_k d_k S_k \mathbf{\lambda}\\
+			&=\sum_{k\in U} d_k \mathbf{x}_kS_k+\sum_{k\in U}\frac{\mathbf{x}_k \mathbf{x}^T_k d_k S_k}{\sigma_k^2} \mathbf{\lambda}
+\end{align*}
+Para terminar basta con sustituir $\mathbf{\lambda}$ y notar que la primera suma es $\hat t_{\mathbf{x}_{HT}}$, así que
+\begin{align*}
+\sum_{k\in U}w_k \mathbf{x}_kS_k&=\hat t_{\mathbf{x}_{HT}}+\left( \sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2}\right) \left(\sum_{k\in U} \frac{\mathbf{x}_k\mathbf{x}_k^Td_kS_k}{\sigma_k^2} \right)^{-1}\left(t_{\mathbf x}-\hat t_{\mathbf{x}_{HT}}\right)\\
+			&=\hat t_{\mathbf{x}_{HT}}+\left(t_{\mathbf x}-\hat t_{\mathbf{x}_{HT}}\right)\\
+			&=t_{\mathbf x}
+\end{align*}
+Con lo anterior concluimos que los ponderadores $w_k$ satisfacen las ecuaciones de calibración.
+\end{proof}
+Aunque con lo anterior pudimos ver que es posible expresar el estimador por regresión en términos del estimador por calibración, no es parte del pensamiento de regresión lineal, cuya idea central se formuló con la ecuación \pref{eq:5.1a}. Sin embargo, resulta interesante interpretar al estimador por regresión como un caso particular del estimador por calibración.
+\subsection{Una forma explícita de $\mathbf{\lambda}$}%mejor título?
+%En la sección \ref{???} introduciremos la importancia de conocer el vector
+Al aplicar el método de multiplicadores de Lagrange se obtienen simultáneamente tanto los ponderadores por calibración $w_k$, para cada $k\in S$, como cada entrada del vector $\lambda$ de multiplicadores.
+
+En la sección \ref{sec:4.3} obtuvimos tales $w_k$, tras suponer la existencia de $\mathbf{\lambda}$. Por otro lado en esta subsección, suponiendo que conocemos los ponderadores $w_k$, obtendremos $\mathbf{\lambda}$.
+
+Como veremos en la sección \ref{sec:9}, algunos autores, entre los que destacan \citeauthor{CIS-112732} y \citeauthor{CIS-220496}, han utilizado herramientas computacionales para obtener los valores de los ponderadores $w_k$.
+
+Ya que contamos con $\{w_k\}_{k\in S}$, procedamos a obtener una expresión para $\mathbf{\lambda}$, partiendo de que al efectuar el proceso de multiplicadores de Lagrange,
+\begin{align*}
+	g_k(w_k,d_k) S_k&-\mathbf{\lambda}^T \mathbf{x}_k S_k=0\\
+	g_k(w_k,d_k)\quad S_k&=\qquad\mathbf{\lambda}^T \mathbf{x}_k\quad S_k
+	\intertext{Al multiplicar por $q_k d_k\mathbf{x}_k^T$,}
+	q_k d_k g_k(w_k,d_k)\mathbf{x}_k^T S_k&=q_k d_k\mathbf{\lambda}^T \mathbf{x}_k \mathbf{x}_k^T S_k\\
+	d_k g\left(\frac{w_k}{d_k}\right)\mathbf{x}_k^T S_k&=\mathbf{\lambda}^T q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k
+	\intertext{Al sumar sobre todas las $k\in U$}
+	\sum_{k\in U}d_k g\left(\frac{w_k}{d_k}\right)\mathbf{x}_k^T S_k&=\sum_{k\in U}\mathbf{\lambda}^T q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k\\
+	&=\mathbf{\lambda}^T \sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k
+\end{align*}
+Si $\sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k$ es invertible,
+$$\mathbf{\lambda}^T=\left[\sum_{k\in U}d_k g\left(\frac{w_k}{d_k}\right)\mathbf{x}_k^T S_k\right]\left[\sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k\right]^{-1}$$
+Para finalizar,
+\begin{align}\label{eqn:5.3}
+	\mathbf{\lambda}&=\left[\sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k\right]^{-1}\left[\sum_{k\in U}d_k g\left(\frac{w_k}{d_k}\right)\mathbf{x}_k S_k\right]
+\end{align}
+Podemos notar que al tomar como $G_k$ a la distancia $\chi$-cuadrada con factores de escala $q_k=\frac{1}{\sigma_k^2}$, se obtiene la ecuación \pref{eqn:5.2}.
+\section{¿La calibración se hace para algún modelo específico?}
+No hay un modelo asistido explícito, a menos que uno insistiera en que ciertas variables para su inclusión en el vector $\mathbf{x}_k$ se sumen a un esfuerzo de modelado serio. En cambio, los ponderadores se justifican principalmente por su coherencia con los controles establecidos.
+
+Esto plantea la pregunta: ¿es importante motivar tal ``calibración sin modelo'' con una declaración explícita de un modelo? Los estadísticos piensan en términos de modelos, y acompañan procedimientos estadísticos con la declaración de un modelo. De hecho, también en la explicación de la calibración, para establecer la relación de $y$ con $\mathbf x$, de manera casi inconsciente pensamos en un modelo, incluso si es tan simple como un modelo lineal estándar.
+
+En ese sentido cobra importancia la correcta elección de variables auxiliares como parte de la definición ``modelo''. Es por eso que descartamos variables, como se explica al final de la sección \ref{sec:10.2}, antes de iniciar el proceso de calibración y no al momento de tener problemas durante la implementación del mismo.
+
+Pero, ¿un modelo establecido ayudará a los usuarios y profesionales a comprender mejor el enfoque de calibración? Para la mayoría de ellos, el enfoque está perfectamente claro y transparente de todos modos. Así que, ¿La búsqueda de ``el verdadero modelo con la verdadera estructura de varianza'' traerá una precisión significativamente mejor para la mayor parte de las muchas estimaciones producidas en una gran encuesta del gobierno? Para tales aplicaciones no se requiere otra justificación más que la coherencia con controles establecidos y totales plausibles.
+
+%%%%%%%%%%%   Aspectos importantes de la calibración    %%%%%%%%%%%%%%
+\chapter{Aspectos importantes de la calibración}
+\section{Otras distancias y ponderadores}\label{sec:6}%Ponderadores??? Hay un paper de Särndal sobre ponderadores por inclusión y otro
+Además de la distancia $G_k(w_k,d_k)=\frac{\sigma_k^2}{2d_k}\left(w_k-d_k\right)^2$, con la que obtenemos el estimador de mínimos cuadrados, aquí exploraremos otras funciones distancia que cumplen las condiciones pedidas en la sección \ref{sec:4.1}.
+\vspace{0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{1.05\textwidth}
+\label{tab:2.1}
+\captionof{table}{Algunas funciones distancia entre ponderadores.}
+\begin{tcolorbox}[tab2,tabularx={c C C}]
+	Caso&G_k(w_k,d_k)&F(q_ku)=F(q_k\mathbf{\lambda}^T\mathbf{x}_k)\\
+\hline
+\scriptsize{\begin{tabular}{c}
+Mínimos\\cuadrados\\generalizada
+\end{tabular}}& \frac{(w_k-d_k)^2}{2d_kq_k} & 1+q_k\mathbf{\lambda}^T\mathbf{x}_k\\[0.5cm]
+\scriptsize{\begin{tabular}{c}
+Raking\\ratio
+\end{tabular}}& \frac{w_k\log(w_k/d_k)-w_k+d_k}{q_k}&\exp(q_k\mathbf{\lambda}^T\mathbf{x}_k)\\[0.5cm]
+\scriptsize Hellinger& \frac{2\left(\sqrt{w_k}-\sqrt{d_k}\right)}{q_k}&(1-q_k\mathbf{\lambda}^T\mathbf{x}_k/2)^{-2}\\[0.5cm]
+\scriptsize{\begin{tabular}{c}
+Entropía\\mínima
+\end{tabular}}& \frac{-d_k\log(w_k/d_k)+w_k-d_k}{q_k}&(1-q_k\mathbf{\lambda}^T\mathbf{x}_k)^{-1}\\[0.5cm]
+\scriptsize{\begin{tabular}{c}
+Mínimos\\cuadrados\\modificada
+\end{tabular}} & \frac{(w_k-d_k)^2}{2w_kq_k} & (1-2q_k\mathbf{\lambda}^T\mathbf{x}_k)^{-1/2}\\[0.5cm]
+\scriptsize{\begin{tabular}{c}
+Mínimos\\cuadrados\\restringidos
+\end{tabular}}& \begin{scriptsize}{\left\{\begin{matrix}\frac{(w_k-d_k)^2}{2d_kq_k}& \text{, si }\scalebox{0.7}L<\frac{w_k}{d_k}<\scalebox{0.7}U\\ \infty&\text{, en otro caso.}\end{matrix} \right.}\end{scriptsize}& \begin{scriptsize}{\left\{\begin{matrix} L &\text{, si }&q_k\mathbf{\lambda}^T\mathbf{x}_k\leq L-1\\1+q_k\mathbf{\lambda}^T\mathbf{x}_k & \text{, si }&L-1<q_k\mathbf{\lambda}^T\mathbf{x}_k<U-1\\ U &\text{, si }&q_k\mathbf{\lambda}^T\mathbf{x}_k\geq U-1.\end{matrix} \right.}\end{scriptsize}\footnote{Para restringir los ponderadores, seleccionemos constantes $L,U$ tales que $L<1<U$. }\\[0.5cm]
+\scriptsize Logit& {\begin{matrix} \frac{d_k}{Aq_k}\left[\left(\frac{w_k}{d_k}-L\right)log\left(\frac{w_k/d_k-L}{1-L}\right)\right.\\ \left.+\left(U-\frac{w_k}{d_k}\right)log\left(\frac{U-w_k/d_k}{U-1}\right)\right]  \end{matrix}}&\frac{L(U-1)+U(1-L)\exp(Aq_k\mathbf{\lambda}^T\mathbf{x}_k)}{(U-1)+(1-L)\exp(Aq_k\mathbf{\lambda}^T\mathbf{x}_k)}.\footnote{El factor de ajuste $A$ está definido como $A=\frac{U-L}{(1-L)(U-1)}$.}
+\end{tcolorbox}
+\end{minipage}
+}
+\normalsize
+
+La tabla \ref{tab:2.1}, que se encuentra en \cite{CIS-106196}, muestra algunas funciones distancia conocidas muy usadas para calibrar.%, normalizaremos tales distancias para que $F'(0)=q_k$%porqué?
+
+La distancia de \textsl{mínimos cuadrados generalizada} es la única que puede dar ponderadores negativos, lo cual puede llegar a ser inaceptable para algunos usuarios. %es el único????!!!
+Como mencionan \cite{CIS-549814}, los ponderadores negativos pueden brindar estimaciones negativas de parámetros poblacionales positivos.
+
+La distancia conocida como \textsl{raking ratio} nos conduce a obtener valores de $w_k$ que son extremadamente grandes respecto a los ponderadores de muestreo $d_k$, lo cual también puede ser inaceptable por motivos similares.
+
+La distancia de \textsl{mínimos cuadrados restringidos} y la distancia \textsl{logit} tienen la propiedad de conducir los ponderadores calibrados a intervalos controlados. Gracias a dichas distancias, los ponderadores extremos pueden ser eliminados manteniendo las propiedades favorables de los estimadores resultantes.
+
+En la sección \ref{sec:9} se describirán a detalle las ventajas y desventajas de cada una de las distancias.
+%\chapter{Sobre la varianza y el ECM}
+\section{Algunas propiedades estadísticas del estimador}\label{sec:8.1}
+El sesgo, el error cuadrático medio y la varianza son algunas de las principales características de los estimadores. Las medidas de dispersión nos interesan debido a que el estimador por calibración suele reducir la varianza del estimador de Horvitz-Thompson que, aunque es insesgado, suele presentar estimaciones demasiado variadas.
+%Ajá, y qué más?
+%completar sección introductoria
+\subsection{Sesgo}
+El sesgo de $\hat t_{y_{cal}}$ está dado por la expresión
+\begin{align*}
+		Sesgo(\hat t_{y_{cal}},t_y)&=\mathbb{E}(\hat t_{y_{cal}})-t_y.
+\intertext{Debido a que el estimador de Horvitz-Thompson es insesgado, como se demuestra en el Teorema \ref{teo:1}, podemos escribir lo anterior como}
+							&=\mathbb{E}(\hat t_{y_{cal}})-\mathbb{E}(\hat t_{y_{HT}})\\
+							&=\mathbb{E}(\hat t_{y_{cal}}-\hat t_{y_{HT}})\\
+							&=\mathbb{E}\left(\sum_{k\in U}w_k y_k S_k-\sum_{k\in U}d_k y_k S_k\right)\\
+							&=\mathbb{E}\left(\sum_{k\in U}(w_k-d_k) y_k S_k\right)\\
+							&=\mathbb{E}\left(\sum_{k\in U}(d_kF(q_k\mathbf{\lambda}^T \mathbf x_k)-d_k) y_k S_k\right)
+\end{align*}
+\begin{align*}
+						Sesgo(\hat t_{y_{cal}},t_y)&=\mathbb{E}\left(\sum_{k\in U}d_k[F(q_k\mathbf{\lambda}^T \mathbf x_k)-1] y_k S_k\right)\\
+							&=\sum_{k\in U}d_k y_k \mathbb{E}\left([F(q_k\mathbf{\lambda}^T \mathbf x_k)-1] S_k\right)
+\end{align*}
+Para cumplir con el objetivo de obtener estimadores casi insesgados, se requiere que  $\mathbb{E}\left(\sum_{k\in U}d_k[F(q_k\mathbf{\lambda}^T \mathbf x_k)-1] y_k S_k\right)\approx 0$. Entonces la calibración deberá esforzarse por tener desviaciones $|F(q_k\mathbf{\lambda}^T \mathbf x_k)-1|$ pequeñas y que faciliten la cancelación de sumandos. De hecho podemos notar que cuando $F$ es la identidad, $\hat t_{y_{cal}}$ coincide con $\hat t_{y_{HT}}$.
+
+La expresión $\mathbb{E}\left([F(q_k\mathbf{\lambda}^T \mathbf x_k)-1] y_k S_k\right)$ depende de $\mathbf{\lambda}^T$, la cual, como vimos en la ecuación \pref{eqn:5.3}, incorpora información de toda la muestra, así que una expresión explícita del sesgo se vuelve mas complicada que para el estimador de Horvitz-Thompson.
+
+Sea $\mathcal{S}$ es la colección de todas las muestras posibles de la población, podemos expresar la esperanza anterior como
+\begin{align}\label{eqn:8.1}
+	\mathbb{E}\left([F(q_k\mathbf{\lambda}^T \mathbf x_k)-1] S_k\right)&=\sum_{S\in\mathcal{S}}S_k[F(q_k\mathbf{\lambda}^T \mathbf x_k)-1]\mathbb P(k\in S).
+\end{align}
+La ecuación \pref{eqn:8.1} es mucho más compleja de obtener que la mostrada en el Teorema \ref{teo:1} para el sesgo del estimador de Horvitz-Thompson. En la sección \ref{sec:8.5}, abordaremos una manera natural de aproximar el sesgo.
+\subsection{Error cuadrático medio}
+El segundo momento (centrado en el origen) del error es denominado error cuadrático medio y está dado por la expresión
+\begin{align*}
+	ECM(\hat t_{y_{cal}})&=\mathbb E\left[(\hat t_{y_{cal}}-t_{y})^2\right]\\
+					&=\mathbb E\left[\hat t_{y_{cal}}^2-2t_y\hat t_{y_{cal}}+t_y^2\right]\\
+					&=\mathbb E\left[\hat t_{y_{cal}}^2\right]-2t_y\mathbb E\left[\hat t_{y_{cal}}\right]+t_y^2.
+\end{align*}
+Análogamente a la expresión del sesgo, podemos expresar lo anterior como
+$$ECM(\hat t_{y_{cal}})=\mathbb E\left[\left(\sum_{k\in U}d_kF(q_k\mathbf{\lambda}^T \mathbf x_k) y_k S_k\right)^2\right]-2t_y\mathbb E\left[\sum_{k\in U}d_kF(q_k\mathbf{\lambda}^T \mathbf x_k) y_k S_k\right]+t_y^2,$$
+donde de nuevo se presenta la dificultad de la incorporación de información de toda la muestra.
+\subsection{Varianza}
+La varianza del estimador por calibración está dada por
+\begin{align*}
+	Var(\hat t_{y_{cal}})&=Var\left(\sum_{i\in U} w_i y_i S_i\right).
+	\intertext{Al expresar la varianza de la suma como}
+		Var(\hat t_{y_{cal}})&=\sum_{i,j\in U} Cov(w_i y_i S_i, w_j y_j S_j)\\
+					&=\sum_{i,j\in U} Cov(d_i F(q_i \mathbf\lambda^T \mathbf x_i) y_i S_i, d_j F(q_j \mathbf\lambda^T \mathbf x_j) y_j S_j)\\
+					&=\sum_{i,j\in U} d_id_jy_iy_jCov(F(q_i \mathbf\lambda^T \mathbf x_i)S_i, F(q_j \mathbf\lambda^T \mathbf x_j)S_j),
+					\intertext{como se mencionó anteriormente, es deseable que se cumpla que $F(\cdot)=1$, caso en el que la expresión anterior se simplifica como}
+					&=\sum_{i,j\in U} d_i d_j y_i y_j Cov(S_i, S_j)\\
+					&=\sum_{i\in U} d_i d_j y_i y_j [\mathbb{E}(S_iS_j)-\mathbb{E}(S_i)\mathbb{E}(S_j)]\\
+					&=\sum_{i,j\in U} d_i d_j y_i y_j(\pi_{ij}-\pi_i\pi_j)\\
+					&=\sum_{i,j\in U} d_i d_j y_i y_j\left(\pi_{ij}-\frac{1}{d_i}\frac{1}{d_j}\right)\\
+					&=\sum_{i,j\in U} d_i d_j y_i y_j\pi_{ij}-\sum_{i,j\in U}y_i y_j,
+\end{align*}
+donde se ven involucradas las probabilidades de inclusión de segundo orden.
+
+Sin embargo, por simplicidad haremos uso de la relación
+\begin{align*}
+	ECM(\hat t_{y_{cal}})&=Var(\hat t_{y_{cal}})+Sesgo(\hat t_{y_{cal}}, t_y)^2.
+\end{align*}
+De aquí que
+\begin{align}\label{eqn:8.2}
+	Var(\hat t_{y_{cal}})&=ECM(\hat t_{y_{cal}})-Sesgo(\hat t_{y_{cal}}, t_y)^2,
+\end{align}
+entonces usaremos las expresiones obtenidas en estas últimas secciones para la obtención de la varianza.
+\section{Estimando medidas de tendencia y dispersión de las estimaciones}\label{sec:8.5}
+Como vimos en la ecuación \pref{eqn:8.1}, para determinar las características del estimador requerimos de los valores $\mathbb{P}(k\in S)$ para cada $k$ en cada muestra $S\in \mathcal S$. Una manera de evitar esta complicación es mediante el uso de la ley fuerte de los grandes números que, como nos explican \cite{CIS-9995}, al realizar varias estimaciones por calibración $\hat t_{y_{cal,1}},\ldots, \hat t_{y_{cal,m}}$, es  posible estimar $\mathbb{P}(\hat t_{y_{cal}})$ mediante la expresión empírica,
+\begin{align}\label{eqn:8.3}
+\frac{\sum_{i=1}^m \one_{(\hat t_{y_{cal,i}}=\hat t_y)}}{m}\quad\overset{\longrightarrow}{\scriptscriptstyle m \rightarrow \infty}\quad \mathbb{P}(\hat t_{y_{cal}}=\hat t_y)\qquad c.s.
+\end{align}
+La ecuación \pref{eqn:8.3} nos permite estimar $\mathbb{E}(\hat t_{y_{cal}})$ mediante la esperanza empírica,
+$$\sum_{i=1}^m \frac{\hat t_{y_{cal, i}}}{m}\quad\overset{\longrightarrow}{\scriptscriptstyle m \rightarrow \infty}\quad\mathbb E(\hat t_{y_{cal}})\qquad c.s.,$$
+con lo que a su vez es posible estimar el sesgo mediante
+\begin{align}\label{eqn:8.4}
+	\sum_{i=1}^m \frac{\hat t_{y_{cal,i}}-t_y}{m}\quad\overset{\longrightarrow}{\scriptscriptstyle m \rightarrow \infty}\quad Sesgo(\hat t_{y_{cal}},t_y)\qquad c.s.
+\end{align}
+Análogamente a la expresión anterior, podemos estimar empíricamente el $ECM(\hat t_{y_{cal}})$ con la expresión
+\begin{align}\label{eqn:8.5}
+	\sum_{i=1}^m \frac{(\hat t_{y_{cal,i}}-t_{y})^2}{m}\quad\overset{\longrightarrow}{\scriptscriptstyle m \rightarrow \infty}\quad ECM(\hat t_{y_{cal}})\qquad c.s.
+\end{align}
+Para la varianza, al sustituir las ecuaciones \pref{eqn:8.4} y \pref{eqn:8.5} en la identidad \pref{eqn:8.2} se tiene
+\begin{align}\label{eqn:8.6}
+	\sum_{i=1}^m \frac{(\hat t_{y_{cal,i}}-t_{y})^2}{m}-\left(\sum_{i=1}^m \frac{\hat t_{y_{cal,i}}-t_y}{m}\right)^2\quad\overset{\longrightarrow}{\scriptscriptstyle m \rightarrow \infty}\quad Var(\hat t_{y_{cal}})\qquad c.s.
+\end{align}
+\section{Aspectos computacionales}\label{sec:9}
+Para calcular el estimador de la ecuación \pref{eq:4.c}, requerimos de la obtención de los $w_k$ y del vector de multiplicadores de Lagrange. En el artículo de \cite{CIS-112732} explican el proceso llevado a cabo por el macro para SAS llamado \textsl{CALMAR}, el cual es ampliamente utilizado en la literatura. Aunque hacemos uso de la librería icarus para \textsl{R}, una versión para dicho lenguaje de CALMAR, el proceso que se sigue es descrito a continuación.
+
+Se encuentra primero tal $\mathbf{\lambda}$ mediante el método de Newton al definir $\phi_S(\mathbf{\lambda})=t_{\mathbf{x}}-\hat t_{x_{HT}}$ y $\phi'_S(\mathbf{\lambda})=\frac{\partial \phi_S(\mathbf{\lambda})}{\partial \mathbf{\lambda}}$.
+
+Al iniciar con $\mathbf{\lambda}_0=0$, se obtienen valores sucesivos $\mathbf{\lambda}_\nu$, con $\nu=1,2,\ldots$ a partir de
+\begin{align}\label{eqn:8.7}
+\mathbf{\lambda}_{\nu+1}=\mathbf{\lambda}_\nu+\left[\phi'_S(\mathbf{\lambda}_\nu)\right]^{-1}\left[t_{\mathbf{x}}-\hat t_{x_{HT}}-\phi_S(\mathbf{\lambda}_\nu)\right]
+\end{align}
+En la función de calibración de tal librería, se cuenta con la opción de elegir la función distancia entre los siguientes métodos:
+\begin{enumerate}\label{distancias}
+	\item El método \textsl{linear}, que usa la distancia de mínimos cuadrados.
+	\item El método \textsl{raking} o multiplicativo.
+	\item El método \textsl{logit}.
+	\item El método \textsl{truncated}, que usa la distancia de mínimos cuadrados restringidos.
+\end{enumerate}
+Mencionaremos algunas ventajas y desventajas de cada método, descritas también por \cite{CIS-241424} y \cite{CIS-112732}:
+\begin{itemize}
+	\item El método \textsl{linear} es computacionalmente el más rápido, pues requiere de solo de una iteración para la obtención de los multiplicadores $\mathbf{\lambda}$ y posteriormente de los ponderadores $w_k$. Como se observa al ejecutar el código del anexo \ref{anx:B}, en ocasiones aún tras $2500$ iteraciones, no llega a converger.
+	
+La ecuación \pref{eqn:5.3} nos permite notar que esto se debe a que en tales casos no es posible invertir la matriz
+	$$\sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k,$$
+debido a los vectores de información auxiliar $\mathbf{x}_k$ seleccionados en la muestra. Esto repercute a su vez en la existencia de $[\phi'_S (\lambda_\nu)]^{-1}$ en la ecuación \pref{eqn:8.6}.
+Otra desventaja de este método es que ocasionalmente proporciona ponderadores negativos o muy grandes, como se mencionó en el capítulo \ref{sec:6}. Los consideraremos muy grandes cuando sean más de 4 veces mayores que los ponderadores iniciales.
+	\item El método \textsl{raking} garantiza la obtención de ponderadores positivos, sin embargo no están acotados superiormente.
+	\item Los métodos \textsl{logit} y \textsl{truncated} fueron creados para imponer restricciones adicionales a los ponderadores. Algunos usuarios solicitan valores estrictamente positivos, pues consideran que toda observación debe contribuir de manera positiva al total. Por otro lado, también es usual recurrir a la calibración para justificar la reducción de un exceso de representatividad. La desventaja que suele presentar esta opción es que limitar demasiado los ponderadores, puede llevar a no tener solución.
+	
+Las cotas $L$ y $U$ no pueden ser tomadas arbitrariamente. Además de la restricción pedida $L<1<U$, en el anexo D se muestra un ejemplo en el que se requieren más restricciones. %crear anexo D, página 8 del paper Raking--cambiarlo por el ejemplo 1
+En la práctica, los valores extremos de $ L$ y $U$ son determinados mediante simulaciones sucesivas en las que $L$ crece hasta $1$ (y $U$ decrece hasta $1$) hasta que el paquete es incapaz de resolver las ecuaciones de calibración.
+
+Con el fin de mantener la dispersión de los ponderadores similar a la inicial, se sugiere elegir $L$ y $U$ de manera que sus respectivas proporciones con la media geométrica de los ponderadores, sea la misma que la que poseen el menor y el mayor de los ponderadores iniciales a dicha cantidad.
+\end{itemize}
+%%%%%%%%%%   Algunos errores al calibrar y cómo evitarlos    %%%%%%%%%%%%%
+\chapter{Algunos problemas al calibrar y cómo evitarlos}\label{sec:10}
+El objetivo del presente capítulo es mostrar algunos de los problemas que se presentan en la calibración, para luego explicar algunas propuestas de solución a los mismos encontradas en la literatura.
+
+Los principales errores surgidos durante la calibración son principalmente de 3 tipos. %cuales?
+Al igual que \cite{CIS-112732} mostraremos, a manera de introducción, algunos ejemplos sencillos de los mismos.
+
+Para contar con una base de datos de tamaño similar a la que  se estudiará en la sección \ref{chp:13}, simularemos unas bases de datos con $(266)^2$ observaciones de las variables $x_1, x_2, y$ y ponderadores $d$.
+
+Para los Ejemplos \ref{ex:1} y \ref{ex:2}, donde $x_1\sim U(9990, 10000)$, $x_2$ está en 2 subpoblaciones del mismo tamaño: $U_{x_{2,1}}\sim U(0,10)$ y $U_{x_{2,2}}\sim U(9990, 10000)$. La variable de estudio $y$ sigue el modelo lineal $y=100+2x_1+2x_2+e$, con $e\sim\mathcal N\left(0,\frac{1-R^2}{R^2}Var(\hat y)\right)$\footnote{Ver teorema \ref{teo:2}} y un coeficiente de determinación $R^2=0.95$. Los ponderadores $d$ son inversos a probabilidades de inclusión en una muestra con probabilidad proporcional al tamaño (\textsl{PPT}) del $3\%$.
+
+\begin{example}\label{ex:1}%agregar los ejemplos al índice???
+Un primer caso de error se presenta cuando se selecciona una muestra en la que los vectores de variables auxiliares $\mathbf x _k=(1,x_{1_k},x_{2_k})$ son de la forma $(1,x_{1_k},0)$. Dicho problema se debe a que las ecuaciones $\sum_{k\in U}w_k\mathbf x_kS_k=t_{\mathbf x}$ no tienen solución al no estar definidas para el total de $x_2$. Más aún, la matriz
+$$\sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k,$$
+que aparece en la ecuación \pref{eqn:5.3} no es invertible, así que no existen el vector de multiplicadores $\mathbf \lambda$ y los ponderadores calibrados $w_k$.
+\end{example}
+\begin{example}\label{ex:2}
+Cuando una de las variables auxiliares está separada en subpoblaciones muy alejadas, el total de dicha variable se ve muy influenciado por la subpoblación en la que el valor de tal variable es mayor.
+
+Para ilustrar tal problema, realicemos lo siguiente:
+
+Al notar que en una muestra con PPT del $3\%$ la cantidad de elementos de $U_{x_{2,2}}$ en la muestra son $704$ ó $705$, tomemos una muestra con PPT de $705$ elementos de $U_{x_{2,2}}$ y otra de $1418$ de $U_{x_{2,1}}$, obteniendo una muestra ``artificial'' del $3\%$ de la población, para luego calibrar los ponderadores.
+
+En el anexo \ref{anx:A0} se realiza tal simulación, en la que además de obtener obtener una estimación con un error relativo de solo $4.14\%$, aumentó la dispersión de los ponderadores como podemos ver en la figura \ref{fig:3.1} y se obtuvieron ponderadores menores a $1$.
+
+\vspace{0.3cm}
+\begin{minipage}\textwidth
+	\begin{center}
+		\includegraphics[scale=0.6]{Ejemplo2.png}
+		\captionof{figure}{Efecto al calibrar en los ponderadores  del Ejemplo \ref{ex:2}.}
+		\label{fig:3.1}
+	\end{center}
+\end{minipage}
+\vspace{0.3cm}
+
+Si se interpretaran como inversos de probabilidades de inclusión, éstas implicarían la existencia de probabilidades de inclusión mayores a $1$. %, lo cual trae consigo una complicación teórica.
+Además de los ponderadores menores a $1$, la tabla \ref{tab:3.1} nos muestra que se obtienen ponderadores negativos y un ponderador demasiado grande.
+\vspace{0.3cm}
+\captionof{table}{Ponderadores que al calibrar se vuelven menores a $1$.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.67\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=2.2]| S[table-format=2.2] | S[table-format=2.2] | S[table-format=5.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&26.37   &50.28   &50.90   &93.07 \\
+	Calibrados&-76.33    &16.23    &33.33 &35383.27
+\end{tcolorbox}
+\label{tab:3.1}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+La sobrerrepresentación de $U_{x_{2,2}}$ en la muestra, ocasiona que el total de $x_2$ se dispare. Para compensarlo, durante la calibración tales elementos son ajustados. El ajuste sobre los ponderadores $d_k$ más pequeños es lo que brinda ponderadores calibrados menores a $1$. El efecto de tal ajuste en $x_2$ es compensado en $x_1$, lo cual nos da el ponderador demasiado grande.
+\end{example}
+\printnotes*
+Para los Ejemplos \ref{ex:3} y \ref{ex:4}, consideremos una base de datos con $x_1\sim U(0, 10)$ y $x_2$ particionada en 2 subpoblaciones: $U_1\sim U(0,10)$, que representa el $99\%$ de la población, y $U_2\sim U(9990, 10000)$. La variable de estudio $y$ sigue el modelo lineal $y=3000+2x_1+2x_2+e$, donde el error $e$ conserva las mismas características que en la base de datos anterior. Los ponderadores $d$ son inversos a probabilidades de inclusión en una muestra con PPT del $3\%$.
+%\newpage
+\begin{example}\label{ex:3}
+Con las condiciones anteriores, tomemos la muestra del $3\%$ de la manera ``artificial'' propuesta en el Ejemplo \ref{ex:2}, aunque con  $u_1=1$. Asistidos por el código del anexo \ref{anx:A1}, notemos en la figura \ref{fig:3.2} que aún tras haber iniciado con ponderadores relativamente cercanos, obtenemos un ponderador muy grande, asociado al único elemento de la muestra perteneciente a $U_1$.
+
+\vspace{0.3cm}
+\begin{minipage}\textwidth
+	\begin{center}
+		\includegraphics[scale=0.6]{Ejemplo3.png}
+		\captionof{figure}{Cambio en los ponderadores del Ejemplo \ref{ex:3}.}
+		\label{fig:3.2}
+	\end{center}
+\end{minipage}
+\vspace{0.3cm}
+
+La tabla \ref{tab:3.2} nos permite notar que, para compensar la presencia de tal ponderador en el total $t_{x_1}$, se obtuvieron varios ponderadores negativos, los cuales causan que el estimador del total $t_y=2.29\cdot10^8$ por calibración sea $\hat t_{y,cal}=-0.9\cdot 10^{8}$. Con tal muestra fija se pasó de tener un error relativo cercano al $0\%$, con el estimador de Horvitz-Thompson, a tener un error relativo de casi $140\%$.
+\vspace{0.3cm}
+\captionof{table}{Ponderadores que al ser calibrados dan uno demasiado grande y varios negativos.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.74\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=6.2]| S[table-format=3.2] | S[table-format=2.2] | S[table-format=7.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&24.57&35.90   &36.97   &86.50\\
+	Calibrados&-48158.0  &-895.6      &33.3  & 2049737.8
+\end{tcolorbox}
+\label{tab:3.2}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+Tal error se puede adjudicar a la muestra, pues en otra realización de la simulación obtenemos los ponderadores que se muestran en la tabla \ref{tab:3.3}.
+\vspace{0.3cm}
+\captionof{table}{Ponderadores que al ser calibrados se vuelven demasiado grandes o negativos.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.74\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=6.2]| S[table-format=3.2] | S[table-format=2.2] | S[table-format=7.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&24.57   &35.83   &36.85 &  86.50 \\
+	Calibrados&-26165.5   &-589.0      &33.3&1410780.6
+\end{tcolorbox}
+\label{tab:3.3}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+Tal muestra pasó de tener un error relativo cercano al $0\%$, con el estimador de Horvitz-Thompson, a tener un error relativo de $183.86\%$ con el estimador por calibración, al haber estimado con $\hat t_{y,cal}=6.52\cdot 10^8$ lo cual es más aceptable por ser positivo.
+\end{example}
+%Para un caso más general, recordemos que en una población de tamaño $N$, la probabilidad de obtener $u_1$ elementos marcados en una muestra probabilística simple es de $\frac{u_1}{N}$ y, como mencionan \cite{CIS-476082}, sus ponderadores inducidos en una muestra aleatoria simple sin reposicion son $\frac{N}{u_2}$.
+
+%La calibración sigue un comportamiento similar, pues incorporar un total $6.19t_2$ usando solo los $u_1$ elementos marcados requiere que sus ponderadores calibrados sean cercanos a $\frac{6.19t_2}{5u_2}$, en nuestro caso, $\frac{7015907}{u_2}$. La aparición del factor $5$ en el denominador se debe a que $\mathbb{E}(x_2|x_2\in U_1)=5$. Esto da una idea del motivo del tamaño del ponderador calibrado más grande.
+
+%Podemos notar que al correr el código del Anexo \ref{anx:A1} con $u_1\geq 9$ los ponderadores calibrados asociados a $U_2$ comienzan a incorporarse al resto, pues $\frac{0.94t_2}{9995\cdot 9}\approx 58$.
+%\newpage%poner newpage?
+
+A medida que la presencia de $u_1$ en la muestra aumenta, los ponderadores empiezan a normalizarse, aunque siguen presentando errores. Sin embargo, notemos que $|U_2|=798$, por lo que al haber tomado una muestra de $2122$ en el caso anterior, el efecto de sobrerrepresentación se ve acrecentado por el reemplazo en el muestreo.
+
+\begin{example}\label{ex:4}
+Bajo las mismas condiciones que se tienen en el Ejemplo \ref{ex:3}, aunque tomando $u_2=16$, la cantidad de elementos de $U_2$ usual en una muestra con PPT del $3\%$, podemos notar en la figura \ref{fig:3.3} que además de aumentar la dispersión, siguen apareciendo valores extremos.
+
+\vspace{0.3cm}
+\begin{minipage}\textwidth
+	\begin{center}
+		\includegraphics[scale=0.6]{Ejemplo4.png}
+		\captionof{figure}{Cambio en los ponderadores de la primera parte del Ejemplo \ref{ex:4}.}
+	\end{center}
+	\label{fig:3.3}
+\end{minipage}
+\vspace{0.3cm}
+
+En contraste con el Ejemplo \ref{ex:2}, los ponderadores calibrados pertenecientes a $U_2$ toman valores grandes de signos opuestos, aunque de menor tamaño por ser los elementos de $U_2$ más representativos en el total $t_{x_2}$. En este caso el error relativo de $\hat t_{y,cal}$ disminuye al $18.57\%$.
+\vspace{0.3cm}
+	\captionof{table}{Efecto del aumento de la representación de una subpoblación.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.68\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=5.2]| S[table-format=2.2] | S[table-format=2.2] | S[table-format=4.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&22.75   &36.67   &38.17   &92.36 \\
+	Calibrados&-3619.97 &25.70&    33.33  &3880.13
+\end{tcolorbox}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+Al tomar ahora $u_2=2$, sobrerrepresentando la subpoblación $U_1$, podemos ver en la tabla \ref{tab:3.5} que se logra disminuir ligeramente la dispersión, además el error relativo de $\hat t_{y,cal}$ se reduce al $10.52\%$. En otras realizaciones se reduce inclusive a $3.58\%$
+\vspace{0.3cm}
+	\captionof{table}{Efecto del aumento de la representación de una subpoblación.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.68\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=5.2]| S[table-format=2.2] | S[table-format=2.2] | S[table-format=4.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&23.92   &36.73   &37.92   &   75.16 \\
+	Calibrados&-3559.02 &30.68    &33.33 &3371.67
+\end{tcolorbox}
+\label{tab:3.5}
+\end{minipage}
+}
+\normalsize
+\end{example}
+Comenzamos mostrando que la alta representación de $0$'s en alguna de las variables auxiliares puede llegar a impedir la inversión de una matriz requerida en la calibración.
+
+Posteriormente vimos que con la aparición de ponderadores negativos se puede llegar a obtener estimaciones negativas que, para variables positivas, es un error bastante grave.
+
+También notamos en algunos ejemplos que la aparición de ponderadores demasiado alejados del resto puede causar estimaciones alejadas del total real.
+%plot(Data[,93],Data$ing_cor, xlim=c(0,30000), ylim=c(0,4e+06)); abline(b= 1.104e+01 , a= 2.261e+04 )
+%plot(Data[,23],Data$ing_cor, xlim=c(0,50000), ylim=c(0,500000), ylab = "Ingresos corrientes", xlab="Rentas", col="blue"); abline(b= 9.999e-01 , a= 2.261e+04 , col="red")
+\section{Limitantes numéricas}
+Como se mostró en la sección \ref{sec:5.1}, es posible pensar en el estimador por regresión lineal como un caso particular de la estimación por calibración. Algunas limitantes numéricas están asociados a la imposibilidad de obtener una inversa para la matriz
+\begin{align}
+	\sum_{k\in U}q_k d_k \mathbf{x}_k \mathbf{x}_k^T S_k\label{eqn:10.1},
+\end{align}
+requerida para la obtención de $\lambda$ como se vió en la ecuación \pref{eqn:5.3}.
+%como se vio en el Ejemplo \ref{ex:1}.
+ Aunque el uso de técnicas como la regresión Ridge permiten la inversión de la matriz, también ocasionan la pérdida del sentido del modelo. Lo anterior se refiere a que modificar la matriz \pref{eqn:10.1} significa la alteración de respuestas en las variables auxiliares. 
+
+Aún si entre las variables auxiliares no se cuenta con variables categóricas, que se ven más afectadas por el efecto de la modificación antes mencionada, modificar la base de datos representa un error mayor que la modificación del modelo durante la etapa de estimación.
+
+En \cite{CIS-156393} se trabaja la calibración como un problema algebraico y, además de proponer funciones distancia inspiradas en el álgebra matricial, se usa como una técnica para obtener otros parámetros además de medias poblacionales. Cuando las ecuaciones de calibración no tienen solución, la población se descompone en dominios pequeños en los que si la tienen. Posteriormente se usa el producto de Kronecker para combinar los estimadores obtenidos en cada dominio.
+\section{Ponderadores negativos o demasiado grandes}\label{sec:10.2}
+Como mencionan \cite{CIS-549814}, el uso de ponderadores negativos puede llevar a obtener estimaciones negativas de parámetros que sabemos que son positivos. Es así como partiendo del método \textsl{linear}, véase la sección \ref{distancias}, con el objetivo de calcular ponderadores calibrados que no sean negativos, se añade como restricción a las soluciones de las ecuaciones de calibración, que éstas deben satisfacer $L<w_k<U$, con
+$$L>0.$$
+
+Tal método, llamado \textsl{truncated} en la computación, corresponde a la distancia de mínimos cuadrados restringidos expuesta en la tabla \ref{tab:2.1}. Como ya se mencionó en la sección \ref{sec:6}, consiste en imponer cotas a las soluciones de las ecuaciones de calibración. Además de brindar una cota inferior, que trata con problemas como los presentados en los Ejemplos \ref{ex:3} y \ref{ex:4}, el presente método acota superiormente las soluciones, lo cual permite tratar con casos como el del Ejemplo \ref{ex:2}.%hacias referencia al 6
+
+Otra manera de obtener ponderadores que no sean negativos, es partiendo de la distancia \textsl{raking} que, como se explica en la sección \ref{sec:6}, proporciona solo ponderadores positivos, aunque no están acotados. En el método \textsl{logit} los ponderadores obtenidos mediante la distancia \textsl{raking} son ajustados para pertenecer a un intervalo $[L,U]$. La expresión de dicho ajuste está dada explícitamente en la distancia \textsl{logit} de la tabla \ref{tab:2.1}.
+
+\section{Descarte de restricciones}\label{sec:3.3}
+\cite{CIS-528372} proponen una técnica a la se refieren como \textsl{descarte de restricciones}. En dicha técnica se determinan variables que muestran ser ``problemáticas'' durante la fase de estimación para luego descartarlas, ajustar el modelo y repetir la estimación usando la misma distancia. A continuación se describe dicha técnica:
+\begin{enumerate}
+	\item Definir el \textbf{tamaño} de una variable como la cantidad de observaciones en las que la variable no es $0$.
+	\item Ordenar de manera descendente las variables según su tamaño y considerar, por ahora, solo aquellas con tamaño positivo. Descartar además las variables de tamaño menor a $60$\footnote{El $60$ está relacionado con el tamaño de población de la encuesta sobre la que trabajaron \citeauthor{CIS-528372}}, entre otros motivos, para ahorrar recursos computacionales.%mencionarlos aquí?
+	\item Verificamos si la matriz \pref{eqn:10.1} es invertible, de no serlo, procedemos de la siguiente manera.
+	\item\label{paso4} Comenzando con la matriz en la que se consideran solo las dos variables de mayor tamaño. Calculamos su número de condición\footnote{Definido como el valor absoluto de la razón entre el mayor y el menor de los eigenvalores de la matriz.}, y si es mayor a $1000$, descartamos la variable de menor tamaño considerada, en otro caso conservamos ambas.
+	\item Agregamos la variable que sigue en el orden del tamaño, si el número de condición de la nueva matriz es mayor de $1000$, se descarta, en otro caso, la conservamos.\label{paso5}
+	\item Repetimos el proceso hasta que todas las variables sean probadas.
+\end{enumerate}%poner textbf's
+¿Cuál es nuestro interés en mantener un número de condición acotado? \cite{CIS-167308} mencionan que si deseamos evitar la multicolinealidad, lo aceptable es contar con números de condición menores a $900$. Por otro lado, en \cite{pizer} se presentó un criterio más relajado, pues usar al $1000$ para tal diagnóstico permite mantener un alto número de variables mientras se reduce significativamente el número de condición final.    
+\begin{enumerate}
+\setcounter{enumi}{6}
+	\item Si después del proceso anterior, el número de condición de la matriz sigue siendo mayor que $10000$, lo cual rara vez ocurre con datos de un censo, descartamos algunas variables adicionales. Para este segundo descarte, ahora seguimos un orden descendiente respecto al incremento causado por cada variable en el paso \ref{paso5}.
+	\item\label{paso8} Calculamos los ponderadores calibrados considerando solo las variables restantes.
+	\item\label{paso9} Repetimos los pasos \ref{paso4} al \ref{paso8} sobre el conjunto de variables de tamaño $0$. Adicionalmente, en caso de no encontrarse tales calibradores en cierto rango, se descartan más restricciones.
+	\item Los ponderadores calibrados finales son tomados al promediar los ponderadores que obtuvimos en los pasos \ref{paso8} y \ref{paso9}.
+\end{enumerate}
+%El proceso antes descrito mostró además reducir el sesgo.
+El descarte de restricciones fue formulado por \citeauthor{CIS-528372} como una medida a llevarse a cabo en la fase de estimación. Aunque tal técnica pretende mantener todas las variables auxiliares, en principio modifica el modelo, lo cual es inaceptable.
+
+Los ponderadores finales no tienen porque satisfacer las ecuaciones de calibración del conjunto total de variables auxiliares que no fueron descartadas, y esto es otra notable desventaja. Sin embargo, es rescatable que podemos aplicar el descarte de restricciones desde la elección de variables auxiliares.
+
+Otra característica relevante es que trata de manera separada las variables de tamaño $0$ del resto, para luego promediar los ponderadores obtenidos en cada grupo.
+
+%espaciar?
+Las anteriores propuestas de solución buscan resolver las limitantes numéricas o concentrar los ponderadores calibrados en cierto rango para evitar obtener estimaciones erradas. Cabe destacar que antes de la fase de estimación se requiere de una buena elección de variables auxiliares y modelo. En el siguiente capítulo veremos la implementación de estas propuestas de solución para evaluar su efectividad.
+%%%%%%%%   El estimador por calibración para parámetros complejos    %%%%%%%%
+\chapter{Implementación y otros usos del estimador por calibración}\label{chp:4}
+El objetivo del presente capítulo es ilustrar el uso del estimador por calibración con datos reales. En la sección \ref{chp:13} usaremos una base de datos para evaluar la efectividad de las propuestas presentadas en el capítulo \ref{sec:10}. En las secciones siguientes describiremos algunos usos del estimador por calibración para la obtención de parámetros poblacionales distintos a totales o medias, además los implementaremos en la misma base de datos.
+
+%Estudiaremos la población artificial formada por las unidades muestrales del
+%%%%%%%%%   Implementacion del metodo de calibracion    %%%%%%%%%%%%%%
+\section{Implementacion del metodo de calibracion}\label{chp:13}
+Estudiaremos la población artificial creada con los datos del \textsl{Concentrado de Hogares} de la ENIGH 2016. Como se explica en \cite{inegi2}, el diseño muestral de la ENIGH es estratificado, polietápico y con PPT. Los factores de expansión son los inversos a tales probabilidades\footnote{Además, fueron reajustados por proyección en cada dominio o según la tasa de no respuesta a nivel estrato.}.
+
+Tomaremos como total a estimar el \textsl{Ingreso Corriente} total de nuestra población artificial.  Para elegir las variables auxiliares descartemos primero aquellas que involucran ingresos, pues es natural pensar que si en la encuesta no fue contestada la pregunta de \textsl{Ingreso corriente}, tampoco lo fueron \textsl{Ingresos por sueldos}, \textsl{otros ingresos}, entre otras. Tampoco usaremos las variables categóricas, aunque añadirlas no requiere mayor modificación al código.
+
+Al seguir un método de \textsl{stepwise selection} para elegir a las variables para un modelo lineal, conservamos 50 variables que contribuyen significativamente al modelo.
+%Step c(1,4,6,9:12,14,15,17:27,29,31,32,34,36,39:41,44,45,47:52,55:57,59:61,65:67,69,71:73,75)
+%cons c(1,4,9,6,3,8,10)
+Por simplicidad, empecemos tomando solo las variables \textsl{tot\_integ}, \textsl{mayores}, \textsl{percep\_ing}, \textsl{estim\_alqu} y \textsl{pago\_tarje} para formar al vector de variables auxiliares, además de un componente $1$ que servirá como intercepto. Algunas características de tales variables se describen en la tabla \ref{tab:4.1}.% que poseen las siguientes características:
+\vspace{0.3cm}
+\captionof{table}{Características de algunas variables de la ENIGH 2016.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.96\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c | l | S[table-format=1.3] | S[table-format=3.3] }]
+&&\text{Coeficiente de}&\text{Porcentaje de}\\
+Variable&Descripción&\text{correlación con}&\text{respuesta}\\
+&&\text{\textsf{ing\_cor}}&\text{positiva}\\
+\hline
+\textsl{tot\_integ}&Número de integrantes del hogar&0.044& 100\\
+			\hline
+\textsl{mayores}&Integrantes del hogar de al menos&0.065& 100\\
+			&12 años&&\\
+			\hline
+\textsl{percep\_ing}&Número de personas que perciben&0.042& 99.856\\
+			&ingreso corriente monetario&&\\
+			\hline
+				&El valor estimado del alquiler que&&\\
+\textsl{estim\_alqu}&habrían de pagar por un alojamiento&0.171& 86.371\\
+				&de las mismas características.&&\\
+			\hline
+\textsl{pago\_tarje}&Pago por tarjeta de crédito.&0.187& 9.978
+\end{tcolorbox}
+\label{tab:4.1}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+%
+%c(1,4,9,11,73,78)
+%c(1,4,9,78)
+
+Al generar estimaciones por calibración incorporando tal información auxiliar, podemos notar que como la variable \textsl{pago\_tarje} está altamente representada por $0$'s, lo que ocasiona que en algunas realizaciones se presentan errores como en el Ejemplo \ref{ex:1}.%set.seed(23)
+
+Tras descartar variables mediante el proceso descrito en la sección \ref{sec:3.3} e implementado en el anexo \ref{anx:D}, proponemos un segundo modelo en el que solo consideramos las variables \textsl{tot\_integ}, \textsl{mayores}, \textsl{percep\_ing} y el componente $1$. 
+
+Aunque tales limitantes numéricas desaparecen, la tabla \ref{tab:4.2} nos permite notar que al igual que en el Ejemplo \ref{ex:2}, en ocasiones %set.seed(37)
+se obtienen ponderadores negativos, sin embargo las estimaciones siguen siendo aceptables, pues con la misma muestra el estimador de Horvitz-Thompson presentó un error del $1.11\%$, mientras que el estimador por calibración tuvo un error del $4.17\%$.
+%seed 5
+\vspace{0.3cm}
+\captionof{table}{Efecto de la calibración en ponderadores de los datos de la ENIGH tras el descarte de variables.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.63\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=3.2]| S[table-format=3.2] | S[table-format=4.2] | S[table-format=4.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&113.0   &670.0   &976.2  &5386.0\\
+	Calibrados&-43.61  &785.39 &1004.44 &4425.28
+\end{tcolorbox}
+\label{tab:4.2}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+Para tratar con la aparición de ponderadores negativos, haremos uso del método ``\textsl{raking}'' en la misma muestra. La tabla \ref{tab:4.3} nos muestra que a pesar de que la distancia \textsl{raking} brinda ponderadores que no están acotados superiormente, es posible obtener ponderadores dentro de un rango aceptable, lo cual podemos notar también en otras realizaciones. En ésta realización se obtuvo un error relativo incluso menor al del método \textsl{linear}, pues fue del $3.55\%$.
+\newpage
+\captionof{table}{Efecto de la calibración en ponderadores de los datos de la ENIGH con el método raking.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.63\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=3.2]| S[table-format=3.2] | S[table-format=4.2] | S[table-format=4.2]}]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&113.0   &670.0   &976.2  &5386.0\\
+	Calibrados&90.64  &782.96 &1004.44 &4239.82
+\end{tcolorbox}
+\label{tab:4.3}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+En la sección \ref{sec:8.5} mencionamos que para obtener mayor precisión en la estimación de las propiedades estadísticas del estimador son necesarias ``varias estimaciones'', es natural preguntarse cuántas son requeridas.
+
+En el anexo \ref{anx:B} se realizaron $100000$ estimaciones con el método \textsl{linear} usando muestras del $0.001\%$ de la población, agrupadas en $100$ diagramas de cajas. Con la finalidad de determinar si dichas cajas se encuentran en rangos cercanos se graficaron juntas en la imagen \ref{fig:4.1}.
+
+\vspace{0.3cm}
+\begin{minipage}\textwidth
+	\begin{center}
+	\label{fig:4.1}
+		\includegraphics[scale=0.8]{boxplot8.png}
+		\captionof{figure}{Diagrama de cajas para la cantidad de estimaciones.}
+	\end{center}
+\end{minipage}
+\vspace{0.3cm}
+
+A pesar de contar con estimaciones que sobreestiman o subestiman el total (cercano a $3$ mil millones), la mayoría permanecen en nuestro rango de interés, así que consideraremos $1000$ estimaciones como suficientes para nuestras estimaciones.
+
+Usando el código del Anexo \ref{anx:C}, se realizaron $1000$ simulaciones para las que se calcularon los estimadores de Horvitz-Thompson y por calibración según distintas distancias, obteniendo los errores relativos que se muestran en la tabla \ref{tab:2}.%set.seed(1)
+
+\vspace{0.3cm}
+\captionof{table}{Comparación de características de las estimaciones usando distintas distancias en el ejemplo.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.85\textwidth}
+\label{tab:2}
+\begin{tcolorbox}[tab2,tabularx={l |S[table-format=1.4] | S[table-format=1.4] C S[table-format=1.4] C}]
+		&&\multicolumn{4}{C}{\text{Calibración con distancia}}\\
+		&\text{Horvitz-Thompson}&\text{Linear}&\text{Raking}&\text{Logit}&\text{Truncated}\\
+		\hline
+		Sesgos& -0.0015 &0.4086 &0.3302 &0.1538 &0.0424\\
+ECM    &0.7563& 0.1689 &0.1091&0.0237&0.0017\\
+V      &0.7563& 0.0019 &0.0001&0.0001 &0.0000\\%3.591e-07
+\end{tcolorbox}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+Los estimadores de Horvitz-Thompson son insesgados, ésto justifica que al contar con errores cuadráticos medios menores en los estimadores por calibración que en los estimadores de Horvitz-Thompson, también tengan una varianza menor. Naturalmente tendremos intervalos de confianza de menor tamaño.
+
+Además de los totales poblacionales, la calibración se puede adaptar para estimar parámetros más complejos que la estimación de medias y totales. %Seguimos asumiendo respuesta completa y el muestreo de una sola fase. 
+A continuación hablaremos sobre el uso de la calibración para la estimación de cuantiles y la estimación en diseños de muestreo de 2 fases.
+\section{Estimación de cuantiles}
+La mediana y otros cuantiles de la población finita son medidas descriptivas importantes. Para estimar los cuantiles, primero se debe estimar la función de distribución del parámetro de interés, que en la población finita es una suma. %Antes de que la calibración se hiciera popular, varios documentos consideraban la estimación de cuantiles, con o sin el uso de información auxiliar.
+
+Consideremos la función Heaviside, definida como
+$$\begin{matrix}\Delta(z):&\mathbb R& \rightarrow &\mathbb R \\ &z&\mapsto &\left\{\begin{matrix}0,\text{ si } z<0\\ 1,\text{ si } z\geq 0.\end{matrix}\right.\end{matrix}$$
+
+La función de distribución empírica de la variable de estudio $y$ es
+\begin{align}
+	F_y(t)&=\frac{1}{N} \sum_{k\in U} \Delta(t-y_k)
+\end{align}
+El cuantil $\alpha$ está definido como
+$$Q_{y,\alpha}=\inf\left\{t\left|F_y(t)\geq\alpha\right.\right\}$$
+En la práctica, la información completa es necesaria, porque es poco factible que los cuantiles de varias variables sean importados de fuentes externas.
+
+La variable auxiliar $x_j$, de la que se observaron los valores $x_{jk}$, tiene función de distribución conocida $F_{x_j}(t)=\frac{1}{N} \sum_{k\in U} \Delta(t-x_{jk})$ y denotamos a su cuantil $\alpha$ por $Q_{x_j,\alpha}$.
+
+Un estimador natural de $F_y(t)$ basado en los ponderadores de diseño $d_k=\frac{1}{\pi_k}$ es
+$$\hat F_{y_{HT}}(t)=\frac{1}{\sum_{k\in U}d_kS_k}\sum_{k\in U}d_k \Delta(t-y_k)S_k,$$
+así que un estimador de $F_y(t)$ por calibración tiene la forma
+\begin{align}\label{eq:6.2}
+	\hat F_{y_{cal}}(t)=\frac{1}{\sum_{k\in U}w_kS_k}\sum_{k\in U}w_k \Delta(t-y_k)S_k,
+\end{align}
+donde los ponderadores $w_k$ están calibrados adecuadamente a una información auxiliar especificada. A partir de la ecuación \pref{eq:6.2} obtenemos la estimación del cuantil $\alpha$ como
+$$\hat Q_{y,\alpha_{cal}}=\inf\left\{t\left|\hat F_{y_{cal}}(t)\geq\alpha\right.\right\}$$
+y definimos de forma análoga $\hat Q_{x_j,\alpha_{cal}}$.
+
+Un caso simple es el abordado por \cite{CIS-228976} y \cite{CIS-184014}, quienes sin especificar modelo alguno, además de contar con los cuantiles conocidos $Q_{x_j\alpha}$ para $j=1,2,\ldots,J$, consideran la variable auxiliar $1$ entre la información disponible para la calibración al total poblacional, y determinan los $w_k$ que minimizan la distancia $\chi$-cuadrada, sujeto a las ecuaciones de calibración
+$$\left\{ \begin{matrix}\sum_{k\in U} w_kS_k&=&N&\\ \hat Q_{x_j,\alpha_{cal}}&=&Q_{x_j,\alpha_{cal}}&\quad j=1,2,\ldots,J\end{matrix}\right.$$
+para estimados $\hat Q_{x_j,\alpha_{cal}}$ adecuadamente definidos.% En general, no es posible encontrar una solución exacta del problema de calibración como se indica.
+
+Al aplicar lo anterior para estimar los cuantiles $Q_{ing\_cor,0.25}$, $Q_{ing\_cor,0.5}$ y $Q_{ing\_cor,0.75}$ usando el código del anexo \ref{anx:g}, la figura \ref{fig:4.2} nos permite ver que las funciones de distribución empíricas inducidas por cada estimador parecen ser cercanas.
+
+%set.seed(1)
+\begin{minipage}\textwidth
+	\begin{center}
+	\label{fig:4.2}
+		\includegraphics[scale=0.8]{Distribuciones.png}
+		\captionof{figure}{Distribuciones empíricas inducidas por los estimadores.}
+	\end{center}
+\end{minipage}
+\vspace{0.3cm}
+
+Mientras que la tabla \ref{tab:4.5} nos permite ver a detalle tales estimaciones.
+
+\vspace{0.3cm}
+\captionof{table}{Cuantiles empíricos estimados inducidos por los estimadores por Horvitz-Thompson  y por Calibración.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.5\textwidth}
+\label{tab:4.5}
+\begin{tcolorbox}[tab2,tabularx={l |S[table-format=5.0] | S[table-format=8.0]}]
+		&\text{Horvitz-Thompson}&\text{Calibración}\\
+		\hline
+		0.25&7849837 &7591824 \\
+		0.5&15948311&20191357 \\
+		0.75&74309298 &66050342
+\end{tcolorbox}
+\end{minipage}
+}
+\normalsize
+
+\section{Información compuesta para diseños de muestreo de 2 fases}
+El muestreo de doble fase tradicional se refiere a diseños que involucran dos muestreos probabilísticos, $S_1$ y $S_2$, de la misma población $U = \left\{1,\ldots, N\right\}$, donde $S_2\subset S_1\subset U$.
+
+La información auxiliar se registra para $U$ y $S_1$, se registran los valores de la variable de estudio $y_k$ solo para $k\in S_2$ con el objetivo de estimar $t_{y}=\sum_{k\in U} y_k$.
+
+Los ponderadores de diseño son $d_{1k}=\frac{1}{\pi_{1k}}$ y $d_{2k}=\frac{1}{\pi_{2k}}$\footnote{$\pi_{2k}=\pi_{k|S_1}$}, además denotemos por $S_{ik}=\one_{S_i}(k)$. Los ponderadores combinados de diseño son $d_k=d_{1k}d_{2k}$, con los cuales el estimador básico insesgado queda de la forma
+$$\hat t_y=\sum_{k\in U}d_k y_k S_{1k} S_{2k}.$$
+El cual puede mejorarse mediante el uso de información auxiliar en dos niveles:
+\begin{enumerate}
+	\item Nivel poblacional: El valor del vector $\mathbf x_{1k}$ es conocido para cada $k\in U$, por lo tanto, se conoce para cada $k\in S_1$ y para cada $k\in S_2$; $\sum_{k\in U}\mathbf{x}_{1k}S_{1k}$ es el vector de totales de la población conocida.
+	\item Nivel de primera muestra: El valor del vector $\mathbf x_{2k}$ es conocido para cada $k\in S_1$, y por lo tanto conocido para cada $k\in S_2$; el total desconocido $\sum_{k\in U}\mathbf{x}_{2k}S_{2k}$ se estima mediante el estimador insesgado $\sum_{k\in U}d_{1k}\mathbf{x}_{2k}S_{1k}.$
+\end{enumerate}
+\cite{CIS-129990} propone dos alternativas para obtener estimadores de calibración
+$$\hat t_{y_{cal}}=\sum_{k\in U} w_k y_k S_{2k}.$$
+
+La primera consiste en una calibración de dos pasos: Determinar ponderadores calibrados iniciales $w_{1k}$ que satisfagan la ecuación
+$$\sum_{k\in U} w_{1k} \mathbf x_{1k} S_{1k}=\sum_{k\in U} \mathbf x_{1k}.$$
+Posteriormente, partiendo de los ponderadores $w_{1k}$, obtener ponderadores calibrados finales que satisfagan
+$$\sum_{k\in U} w_{k} \binom{\mathbf x_{1k}}{\mathbf x_{2k}} S_{2k}=\sum_{k\in U} w_{1k}\binom{\mathbf x_{1k}}{\mathbf x_{2k}} S_{1k}=\binom{\sum_{k\in U} \mathbf x_{1k}}{\sum_{k\in U} w_{1k}\mathbf x_{2k}S_{1k}}.$$
+
+La segunda propuesta busca determinar directamente los ponderadores $w_k$ tales que
+$$\sum_{k\in U} w_{k} \mathbf x_k S_{2k}=\binom{\sum_{k\in U} \mathbf x_{1k}}{\sum_{k\in U} d_{1k}\mathbf x_{2k}S_{1k}}.$$
+
+No es de  sorprender que cada alternativa brinda ponderadores diferentes y  su eficiencia depende de manera sutil del patrón de correlación entre $y_k$, $\mathbf x_{1k}$ y $\mathbf x_{2k}$.
+
+Para verificar la utilidad de la calibración de dos pasos, tomemos de nuestra población artificial una primera muestra $S_1$ con PPT del $1\%$ en la que nuestro vector de información auxiliar $\mathbf x_{1k}$ está conformado por las variables \textsl{tot\_integ} y un componente $1$. En la siguiente fase de muestreo, tomemos el  vector de información auxiliar $\mathbf x_{2k}$ como el formado por las variables \textsl{mayores} y \textsl{percep\_ing}.
+
+Mediante el código del anexo \ref{anx:g} podemos notar que en algunas realizaciones, algunos ponderadores calibrados iniciales $w_{1k}$, lo cual no es aceptado por el software para el segundo paso, sin embargo en la mayoría de los casos, como el que se ilustra en la tabla \ref{tab:4.6}, cumple su cometido.%seed 139, 113
+\newpage
+\captionof{table}{Efecto de la calibración de dos pasos en ponderadores de los datos de la ENIGH.}
+\begin{tabular}{c}
+\\
+\end{tabular}
+\vspace{-0.3cm}
+\par\smallskip\noindent\footnotesize
+\centerline{
+\begin{minipage}{0.662\textwidth}
+\begin{tcolorbox}[tab2,tabularx={c|S[table-format=3.2]| S[table-format=4.2] | S[table-format=4.2] | S[table-format=4.2] }]
+	&\text{Mínimo}&\text{Mediana}&\text{Media}&\text{Máximo}\\
+	\hline
+	Iniciales&212.0   &1544.0  &1827.0  &4974.0\\
+	Primer paso&101.7   &793.3   &901.2  &2452.6  \\
+	Segundo paso&62.03  &799.00  &901.20 &2347.78
+\end{tcolorbox}
+\label{tab:4.6}
+\end{minipage}
+}
+\normalsize
+\vspace{0.3cm}
+
+La calibración de dos pasos brindó estimadores muy cercanos al total real, pues el error relativo pasó del $109.25\%$ en el estimador de Horvitz-Thompson a tener un error relativo del $2.34\%$ en el primer paso y un $1.70\%$ tras el segundo paso, aunque ésta reducción del error no es persistente.%set.seed(3)
+%¿Cómo podemos tomar esta información compuesta en cuenta? Algunos autores que asumen el modelo de regresión generalizada formulan modelos usando $x_{1k}$ y también con $x_{2k}$.
+\section{Breve mención de otras aplicaciones}
+En \cite{plikusas} se aborda el uso de la calibración  para la estimación de la razón entre los totales de dos variables $y_1$ y $y_2$,
+$$R=\frac{\sum_{k\in U} y_{1k}}{\sum_{k\in U} y_{2k}},$$
+mediante el estimador
+$$\hat R_{cal}=\frac{\sum_{k\in U} w_k y_{1k} S_k}{\sum_{k\in U} w_k y_{2k} S_k},$$
+donde al conocer la razón $R_0$ entre los totales de las variables auxiliares $x_1$ y $x_2$, auxiliares de $y_1$ y $y_2$ respectivamente, 
+los ponderadores $w_k$ son aquellos que satisfacen la ecuación de calibración
+$$\sum_{k \in U}w_k\left(x_{1k}-R_0x_{2k}\right)=0.$$
+Además de éstas aplicaciones, en la literatura reciente se ha usado la calibración para la estimación de parámetros bilineales, ajuste de ponderadores para no respuesta, calibración con respecto a momentos empíricos de segundo orden y algunas otras que son exploradas en \cite{CIS-252935} y \cite{plikusas}.
+%%%%%%%%%%%%%%%%%%  Conclusiones  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Conclusiones y comentarios finales}
+\addcontentsline{toc}{chapter}{Conclusiones y comentarios finales}
+El capítulo 1 introduce el estimador por calibración y los aspectos que nos lo brindan. A partir del estimador de Horvitz-Thompson, se ajustan simultaneamente los ponderadores sujetos a restricciones impuestas por las variables auxiliares. El uso de ponderadores que incorporan información de toda la muestra está justificado por la relación entre la variable de estudio y las variables auxiliares.
+
+En el segundo capítulo, hemos explorado las características que nos hacen elegirlo por sobre el estimador de Horvitz-Thompson. Como tal estimador es insesgado, reducir el ECM de las estimaciones ocasiona la reducción de la varianza y el tamaño de los intervalos de confianza.
+
+Poner la estimación por calibración en lugar de la de Horvitz-Thompson no es garantía para contar con una estimación sin errores. Es así como en el tercer capítulo, hemos estudiado algunos problemas que suelen presentarse durante la estimación por calibración, además de algunas propuestas de solución a los mismos junto a sus ventajas y desventajas. 
+
+Para lograr una buena estimación por calibración, se requiere iniciar con una buena elección de las variables auxiliares. Un método de elección de las mismas se expuso en la sección \ref{sec:3.3}.
+
+Tener una partición en la población inducida por una variable que toma valores repartidos entre varios grupos alejados, puede ocasionar problemas en la fase de estimación. Lo anterior se debe usualmente a haber obtenido una muestra que sobrerrepresenta a alguna de las subpoblaciones, lo que puede traer consigo ponderadores problemáticos y que brindan estimadores sesgados a ciertos valores.
+
+Consideramos como problemáticos a los ponderadores menores que $1$ y a los ponderadores negativos. Se propuso la elección de alguna otra distancia que evitara tal problema. En ocasiones las ecuaciones de calibración con la nueva distancia no tienen solución, preferiremos entonces quedarnos con el estimador de Horvitz-Thompson.
+
+Aunque en ocasiones podemos considerar aceptables los ponderadores menores que $1$, aludiendo a que se asocian a elementos de la población demasiado raros, no es el caso de los ponderadores negativos.
+
+También adjudicado a la partición de la población por alguna variable, aunque ahora para compensar la aparición de ponderadores menores a $1$ (o negativos) que ajustan el total de una primera variable, suelen aparecer ponderadores demasiado grandes y alejados del resto, como una medida para satisfacer la ecuación de calibración de otra de las variables.
+
+Otra causa de tal problema es la infrarrepresentación en la muestra de elementos de una subpoblación con respuestas demasiado grandes a alguna variable.
+
+En el capítulo final se implementaron las propuestas de solución en datos reales. Se obtuvieron resultados satisfactorios que verificaron lo mencionado en capítulos anteriores. Además, se expusieron algunas aplicaciones del método de calibración. Más allá de la estimación de totales, al tratarse de sumas ponderadas, es posible estimar cuantiles, generar estimaciones para muestras de 2 fases, imputar respuestas, etc.
+
+A pesar de que el estimador por calibración no es una propuesta tan reciente, tampoco goza de la popularidad del estimador de Horvitz-Thompson, aunque está presente en el estimador por regresión. Un buen estimador por calibración requiere de un buen diseño de muestreo y una correcta elección de variables, las cuales también requieren de un análisis exploratorio previo. Para usos requeridos en problemas de actualidad en los que más que un insesgamiento, requerimos la reducción del error cuadrático medio en términos de precisión y se sugiere considerar el uso del método de calibración.
+%%%%%%%%%%%%%%%%%%  Anexos  %%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\cleardoublepage
+\addappheadtotoc\appendixpage
+%%%%%%%%%%%%%%%%  Demostraciones?  %%%%%%%%%%%%%%%%%%%%
+\chapter{Algunos resultados mencionados}\label{anx:A}
+\begin{theorem}\label{teo:1}
+	El estimador de Horvitz-Thompson es insesgado
+\end{theorem}
+\begin{proof}
+Con la misma notación, veamos que
+\begin{align*}
+		Sesgo(\hat t_{y_{HT}},t_y)&=\mathbb{E}(\hat t_{y_{HT}})-t_y\\
+							&=\mathbb{E}\left(\sum_{k\in U}d_k y_k S_k\right)-t_y\\
+							&=\sum_{k\in U}d_k y_k \mathbb{E}\left(S_k\right)-t_y
+\end{align*}
+Para determinar $\mathbb{E}\left(S_k\right)$, de nuevo consideremos la colección de todas las posibles muestras $\mathcal{S}$ para ver que
+\begin{align*}
+	\mathbb{E}\left(S_k\right)&=\sum_{S\in \mathcal{S}}S_k \mathbb{P}(k\in S)
+	\intertext{Como $S_k$ es una indicadora, la cantidad anterior es la suma de las probabilidades de pertenencia del elemento $k$ a cada muestra $S$, es decir,}
+							&=\pi_k\\
+							&=\frac{1}{d_k}
+\end{align*}
+luego,
+\begin{align*}
+		Sesgo(\hat t_{y_{HT}},t_y)&=\sum_{k\in U}d_k y_k\frac{1}{d_k}-t_y\\
+							&=\sum_{k\in U}y_k-t_y\\
+							&=t_y-t_y\\
+							&=0
+\end{align*}
+\end{proof}
+\begin{theorem}\label{teo:2}
+	Consideremos el modelo $y=\hat B^T \mathbf x$. Sea $\hat y=\hat B^T\mathbf x+e$ el estimador de $y$ según el modelo.
+	
+	La varianza del error $e$ del modelo está dada por
+	$$Var(e)=\frac{1-R^2}{R^2}Var(\hat y),$$
+	donde $R^2$ es el coeficiente de determinación entre $y$ y su estimador $\hat y$.
+\end{theorem}
+\begin{proof}
+	El coeficiente de determinación está dado por
+	\begin{align*}
+		R^2&=\frac{Cov(y,\hat y)^2}{Var(y)Var(\hat y)}\\
+			&=\frac{\left[Cov(\hat B^T \mathbf x,\hat B^T \mathbf x+e)\right]^2}{Var(y)Var(\hat y)}\\
+			&=\frac{\left[Cov(\hat B^T \mathbf x,\hat B^T \mathbf x)+Cov(\hat B^T \mathbf x,e)\right]^2}{Var(y)Var(\hat y)}\\
+			&=\frac{\left[Var(y)+Cov(y,e)\right]^2}{Var(y)Var(\hat y)}.
+			\intertext{Supongamos que $e$ y $y$ son independientes, así que}
+			&=\frac{Var(y)^2}{Var(y)Var(\hat y)}\\
+			&=\frac{Var(y)}{Var(\hat y)}\\
+			&=\frac{Var(y)}{Var(y+e)}\\
+			&=\frac{Var(y)}{Var(y)+Var(e)}\\
+R^2\left[Var(y)+Var(e)\right]&=Var(y)\\
+R^2Var(e)&=(1-R^2)Var(y)\\
+	Var(e)&=\frac{1-R^2}{R^2}Var(y)
+	\end{align*}
+Aunque supusimos la independencia de $e$ y $y$, generan un espacio de probabilidad donde son dependientes, así que el resultado es válido.
+\end{proof}
+\chapter{Determinando la cantidad necesaria de simulaciones}\label{anx:B}
+\begin{lstlisting}[language=R]
+###########################Librerías#############################
+	#Librerías necesarias para trabajar
+  library(icarus)	#Para la calibración
+  library(parallel) 	#Para paralelizar las operaciones
+  library(sampling)	#Para calcular las PPT
+  library(pps)		#Para tomar muestras con PPT
+###########################Funciones#############################
+	#Declaración de funciones necesarias para trabajar
+#Carga la base de datos y declara variables globales y para el cluster
+BaseDatos<-function()
+{
+  #Leemos toda la base de datos
+  MyData <- read.csv(file="/.../concentradohogar.csv", header=TRUE, sep=",")
+  #Ya que se cargaron los 70311 observaciones de 127 variables, descartamos las variables categóricas
+  Data=MyData[,c(14:127)]
+  Data[,colnames(MyData[c(0),][9])] <- MyData[,c(9)]
+  #Quitamos las variables relacionadas con ingresos
+  Data=Data[,-c(12:42,44,97:100)]
+  #Columna de 1's para el intercepto
+  Data$intercepto=rep(1,nrow(Data))
+  #Reordenamos las variables por simplicidad
+  Data=cbind(Data[,-c(11,79)],Data[,c(11,79)])
+  #Data es la matriz de datos para realizar inferencia y Factores los factores de expansión
+  return(Data)
+}
+#Encuentra el apuntador al primer elemento de la segunda subpoblación
+separacion<-function(Data)
+{
+  V=mean(Data$y[1:200])+sqrt(var(Data$y[1:200]))
+  Division=min(which(Data$y>2*V))
+  return(Division)
+}
+#En la siguiente función Data es nuestra matriz de datos, ycolname el nombre de la variable de interés vectaux las columnas que forman los vectores de información auxiliar, samplesize el tamaño de muestra y mtd el método de calibración
+estim_cal<-function(Data, ycolname, vectaux, samplesize, mtd, control)
+{
+  #Diseño de muestreo: muestreo con PPT
+  if(is.na(control))
+    s<-ppss(Data$factor, nrow(Data)*samplesize)
+  else
+  {
+    div<-separacion(Data)
+    if(control==0)#Para permitir muestras con sobrerrepresentación extrema
+      s2<-c()
+    else
+      s2<-ppss(Data$factor[div:N],control)
+    
+    if(control==nrow(Data)*samplesize)
+      s1<-c()
+    else
+      s1<-ppss(Data$factor[1:(div-1)],nrow(Data)*samplesize-control)
+    
+    s=c(s1, s2)
+  }
+  S=Data[s,]
+  y= unlist(S[ycolname])        #y es nuestro parámetro de interés
+  #Determinamos ahora los ponderadores por calibración
+  dimaux=ncol(Data) #Tamaño original del vector de información auxiliar
+  margins <- matrix(NA, nrow=dimaux, ncol=3)#vector completo de información auxiliar
+  for(n in 1:dimaux)#inserta todos los vectores auxiliares excepto el de los factores de expansión
+    margins[n,]<-c(colnames(S[n]), 0, Totales[n])
+  margins<- margins[vectaux,] #considera solo las columnas de la información auxiliar
+  #que están en el arreglo vectaux
+  #Realiza la calibración de ponderadores con la muestra S, la información auxiliar
+  #de margins los ponderadores iniciales de factor, por el método ingresado mtd
+  w <- calibration(data=S, marginMatrix=margins, colWeights="factor",method=mtd
+                   ,description=FALSE)
+  
+  boxplot(S$factor, w, border = rgb(0,0.3094340,0.5849057), ylab=c("Ponderadores"), names=c("Iniciales","Calibrados"))
+  print(summary(S$factor))
+  print(summary(w))
+  
+  Y=Totales[which(names(Data)==ycolname)]
+  Y_HT=weightedTotal(y,S$factor)
+  Y_cal=weightedTotal(y,w)
+  Tot<-matrix(c(Y,Y_HT,Y_cal), nrow = 1)
+  colnames(Tot)<-c("Real","H-T","Cal")
+  
+  return(Y_cal)
+}
+
+
+#En la siguiente linea llamamos a la función de calibración e imprimimos los resultados de los totales, el método de calibración mtd puede ser linear, logit, truncated o raking
+estim_ingcor<-function(x){
+  return(try(estim_cal(Data, "ing_cor", InfAux, 0.00215, "linear", NA),TRUE))
+}
+#La siguiente función proporciona nestimaciones*ncajas agrupadas en ncajas conjuntos
+estimators<-function(ncajas, nestimaciones, Data, ycolname, InfAux){
+  for(j in 1:ncajas){
+      Aux<-parSapply(clust, 1:nestimaciones, function(x) estim_ingcor(x))
+    if(j==1){
+      Cajas<-matrix(data=Aux, nrow = ncajas)
+    }else{
+      Cajas<-cbind(Cajas, Aux)}
+    rm(Aux)
+    print(c("Cargando ", j*100/ncajas, "%"))
+  }
+  Cajas<-as.numeric(Cajas)
+  Cajas<-matrix(data=Cajas, ncol = ncajas, nrow = nestimaciones)
+  #Hasta aquí puede tener NA's debido a errores de convergencia
+  VectorNA=which(is.na(Cajas))
+  while (length(VectorNA)>0){
+    Cajas[which(is.na(Cajas))]=parSapply(clust, 1:length(VectorNA), function(x) estim_ingcor(x))#Llena los na's
+    VectorNA=which(is.na(Cajas))
+  }
+  #Se asegura de darle estructura de matriz
+  Cajas<-as.numeric(Cajas)
+  Cajas<-matrix(data=Cajas, ncol = ncajas, nrow = nestimaciones)
+  return(Cajas)
+}
+#Declaración de las funciones para paralelizar
+paraleliza<-function()
+{
+  no_cores <- detectCores()
+  clust <- makeCluster(no_cores)
+  clusterExport(clust, "estim_cal")
+  clusterExport(clust, "multiestim_cal")
+  clusterExport(clust, "Data")
+  clusterExport(clust, "weightedTotal")
+  clusterExport(clust, "Totales")
+  clusterExport(clust, "InfAux")
+  clusterExport(clust, "calibration")
+  clusterExport(clust, "estim_ingcor")
+  clusterExport(clust, "multiestim_ingcor")
+  return(clust)
+}
+###########################Programa#############################
+  Data=BaseDatos()
+  #Consideramos los totales ponderados para obtener los totales poblacionales, pues tales factores se obtuvieron para el muestreo con probabilidad proporcional al tamaño en la población entera.
+  Totales=colSums(Data$factor*Data)
+  #Cajas y bigotes de 100 000 simulaciones
+  clust=paraleliza()
+  Cajas=estimators(100,1000, Data, "ing_cor", InfAux, "linear")
+  stopCluster(clust)
+  Cajas
+  boxplot(Cajas, border=rgb(0,0.3094340,0.5849057), ylim=c(2.2e+09,4.8e+09), ylab="Total estimado", xlab="Realizaciones")
+  abline(h=Totales["ing_cor"], col="red")
+\end{lstlisting}%Corregir e incluir la referencia de las variables auxiliares
+%%%%%%%%%%%%%%%%%%  Código 1  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Estimando las propiedades estadísticas del estimador bajo distintas distancias}\label{anx:C}
+\begin{lstlisting}[language=R]
+###########################Librerías#############################
+	#Librerías necesarias para trabajar
+  library(icarus)	#Para la calibración
+  library(parallel) 	#Para paralelizar las operaciones
+###########################Funciones#############################
+multiestim_cal<-function(Data, ycolname, vectaux, samplesize, CotaU){
+  #Muestra simple del samplesize\%
+  s<-ppss(Data$factor,nrow(Data)*samplesize)
+  #De la matriz data, consideramos solo los datos de la muestra elegida
+  S=Data[s,]
+  #d son los factores de expansión d_k
+  d=S$factor
+  #y es nuestro parámetro de interés
+  y= unlist(S[ycolname])
+  #Estimador de HT del total de y
+  Y_HT=weightedTotal(y	,d)
+  #Determinamos las cotas para logit y truncated
+  L=min(Data[,"factor"])/exp(mean(log(Data[,"factor"])))
+  U=max(Data[,"factor"])/exp(mean(log(Data[,"factor"])))
+  #Determinamos ahora los ponderadores calibrados
+  #Primero definimos la matriz de ecuaciones de calibración para todos los datos
+  #Tamaño original del vector de información auxiliar
+  dimaux=ncol(Data)-1
+  #Matriz de tamaño px3, p-tamaño del vector auxiliar, 3: nombre de la variable auxiliar[,1], cantidad de categorías, que fijamos en 1[,2], total por cada categoría[,3]
+  margins <- matrix(NA, nrow=dimaux, ncol=3)
+  for(n in 1:dimaux)
+    #inserta todos los vectores auxiliares excepto el de los factores de expansión
+    margins[n,]<-c(colnames(S[n]), 0, Totales[n])
+  #Considera solo las columnas de información auxiliar que están en el arreglo vectaux
+  margins<- margins[vectaux,]
+  #Realiza la calibración de ponderadores con los de la muestra S, la información auxiliar de margins, los ponderadores iniciales de ``factor'', por los distintos métodos
+  wlin <- try(calibration(data=S, marginMatrix=margins, colWeights="factor",method="linear" ,description=FALSE),TRUE)
+  wran <- try(calibration(data=S, marginMatrix=margins, colWeights="factor",method="raking" ,description=FALSE), TRUE)
+  wlog <- try(calibration(data=S, marginMatrix=margins, colWeights="factor",method="logit" , bounds=c(L,U*CotaU),description=FALSE),TRUE)#0 a 55500
+  wtru <- try(calibration(data=S, marginMatrix=margins, colWeights="factor",method="truncated" ,bounds=c(L,U*CotaU),description=FALSE),TRUE)
+  Y_cal_lin=weightedTotal(y,wlin)
+  Y_cal_ran=weightedTotal(y,wran)
+  Y_cal_log=weightedTotal(y,wlog)
+  Y_cal_tru=weightedTotal(y,wtru)
+  return(c(Y_HT, Y_cal_lin, Y_cal_ran, Y_cal_log, Y_cal_tru))
+}
+multiestim_ingcor<-function(x){
+ return(try(multiestim_cal(Data, "ing_cor", InfAux, 0.001, 2),TRUE))
+}
+comparativa<-function(nestimaciones){
+  Simulacion=parSapply(clust, 1:nestimaciones, function(x) multiestim_ingcor(x))#aqui es un arreglo multidimensional
+  VectorNA=unique((which(is.na(Simulacion), arr.ind=TRUE))[,2])#debe determinar solo el renglon
+  while (length(VectorNA)>0){
+    Aux=parSapply(clust, 1:length(VectorNA), function(x) multiestim_ingcor(x))
+    for(i in 1:length(VectorNA))
+      Simulacion[,VectorNA[i]]=Aux[,i]
+    rm(Aux)
+    VectorNA=unique((which(is.na(Simulacion), arr.ind=TRUE))[,2])
+  }
+  rownames(Simulacion)<-c("Y_HT", "Y_cal_lin", "Y_cal_ran", "Y_cal_log", "Y_cal_tru")
+  Y=Totales["ing_cor"]
+  Sesgos<-mean(Simulacion[,1]-Y)/Y
+  for(i in 2:5)
+    Sesgos<-c(Sesgos, mean(Simulacion[,i]-Y)/Y)
+  ECM<-mean((Simulacion[1,]-Y)^2)/Y^2
+  for(i in 2:5)
+    ECM<-c(ECM, mean((Simulacion[,i]-Y)^2)/Y^2)
+  V<-ECM-Sesgos^2
+  Descripcion=rbind(Sesgos, ECM, V)
+  colnames(Descripcion)<-c("HT", "lin", "ran", "log", "tru")
+  print(Descripcion)
+  return(Simulacion)
+}
+#########################Programa###########################
+  clust=paraleliza()
+  Com=comparativa(1000)
+  stopCluster(clust)
+\end{lstlisting}
+%%%%%%%%%%%%%%%%%%  Código 2  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Elección de las variables auxiliares}\label{anx:D}
+\begin{lstlisting}[language=R]
+#Función para la elección de variables que no causan multicolinealidad
+#Para la variable ing_cor, descartamos las variables que involucran ingresos, al llamar la función con rest_adicionales=c(24:55,57,110:113, 115)-13
+#Para descartar además las variables que presentan singularidades al aplicar lm y aquellas que son sumas o sumandos de otras variables consideradas, añadimos
+#rest_adicionales=c(rest_adicionales,2,3,5:8,61,63,66,71,75,79,86,87,91,95,96,113,114)
+constrains<-function(Data, rest_adicionales)
+{
+  cant_variables<-ncol(Data)-1
+  #Obtiene el orden de las variables según su tamaño
+  constrain<-matrix(0,1,cant_variables)
+  for(i in 1:cant_variables)
+    constrain[i]<-sum(Data[,i]>0)
+  colnames(constrain)<-colnames(Data[1:cant_variables])
+  orden=order(constrain[1,], decreasing = TRUE)
+# orden[c(1,3)]=orden[c(3,1)] #con ésta línea elegimos cuál de las variables de mayor tamaño será la inicial para el proceso
+  ini_const<-length(which(constrain==max(constrain)))#cantidad de variables con el tamaño mayor
+  variables=orden[1]
+  
+  for(i in 2:cant_variables)#Se agregan variables sin exceder las condiciones descritas
+  {
+    if(!orden[i]%in%rest_adicionales)#Para aquellas variables que no involucran ingresos,
+    {
+      Mat<-matrix(0,ini_const,ini_const)#Inicializa con la de 2x2
+      for(j in 1:nrow(Data))#Determina la matriz a invertir incorporando información de toda la base de datos
+      {
+        aux<-as.matrix(Data[j,c(variables, orden[i])])
+        Mat<-Mat+Data$factor[j]*t(aux)%*%aux
+      }
+      eig<-eigen(Mat)$values
+      condition<-abs(max(eig)/min(eig))#Calcula el número de condición de la matriz obtenida
+      if(condition<1000)#Si no se excede el límite, se agrega la nueva variable
+      {
+        variables=c(variables, orden[i])
+        ini_const=ini_const+1
+      }
+      rm(Mat)
+    }
+  }
+  return(variables)
+}
+\end{lstlisting}
+%%%%%%%%%%%%%%%%%%  Código 3  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Simulaciones para ilustrar algunos errores al calibrar}\label{anx:A0}%arreglar
+\begin{lstlisting}[language=R]
+#Librerías necesarias para el diseño de los ponderadores iniciales
+library(sampling)
+library(ineq)
+tamx<-round(sqrt(70311)+1)
+N=tamx*tamx
+n=round(0.03*N)
+
+#Ejemplos 1 y 2, para ponderadores menores a 1
+x1=seq(9990, 10000, length.out = tamx)
+x2=c(seq(0,10,length.out = tamx/2), seq(9990,10000,length.out = tamx/2))
+#Genera una tabla con todas las combinaciones posibles de las variables x1 y x2
+Data<-expand.grid(x1,x2)
+
+#Coeficientes para generar la variable y, correlacionada con x1 y x2
+beta0=100
+beta1=2
+beta2=2
+R2=0.95
+ve=((1-R2)/R2)*((beta1^2)*var(x1)+(beta2^2)*var(x2))
+DE<-sqrt(ve)
+y=beta0 + beta1*Data[,1] + beta2*Data[,2]+ rnorm(N, mean=0, sd=DE)
+
+#Genera los ponderadores
+pi=inclusionprobabilities(y, n)
+boxplot(1/pi, border = rgb(0,0.3094340,0.5849057), ylab="Ponderadores")
+
+#Agrega a la tabla Data una columna de 1's para el intercepto y las variables creadas
+Data<-cbind(rep(1,N), Data, y, 1/pi)
+colnames(Data)<-c("1","x1","x2","y", "factor")
+#Finalmente le da estructura Dataframe, para volverla compatible con el código del anexo D
+Data=as.data.frame(Data)
+
+#####################################################
+################ Para calibrar ######################
+#####################################################
+Totales=colSums(Data)
+
+#Con una muestra aleatoria, siguiendo el código del anexo D
+source("/.../Paralelizado.R")
+cal=estim_cal(Data, "y", c(1,2,3), n/N, "linear", control=NA)#control=NA para el ejemplo 1
+\end{lstlisting}
+%%%%%%%%%%%%%%%%%%  Código 4  %%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Otras simulaciones para ilustrar algunos errores al calibrar}\label{anx:A1}
+\begin{lstlisting}
+#Librerías necesarias para el diseño de los ponderadores iniciales
+library(sampling)
+library(ineq)
+
+tamx<-round(sqrt(70311)+1)
+N=tamx*tamx
+n=round(0.03*N)
+
+#Ejemplos 3 y 4, ponderadores muy grandes y negativos
+x1=seq(0, 10, length.out = tamx)
+x2=c(seq(0,10,length.out = (tamx*0.99-1)), seq(9990,10000,length.out = tamx*0.01))
+#Genera una tabla con todas las combinaciones posibles de las variables x1 y x2
+Data<-expand.grid(x1,x2)
+
+#Coeficientes para generar la variable y, correlacionada con x1 y x2
+beta0=3000
+beta1=2
+beta2=2
+R2=0.95	
+ve=((1-R2)/R2)*((beta1^2)*var(x1)+(beta2^2)*var(x2))
+DE<-sqrt(ve)
+y=beta0 + beta1*Data[,1] + beta2*Data[,2]+ rnorm(N, mean=0, sd=DE)
+
+#Genera los ponderadores
+pi=inclusionprobabilities(1:N, n)
+boxplot(1/pi, border = rgb(0,0.3094340,0.5849057), ylab="Ponderadores")
+
+#Agrega a la tabla Data una columna de 1's para el intercepto y las variables creadas
+Data<-cbind(1,Data, y, 1/pi)
+colnames(Data)<-c("1","x1","x2","y", "factor")
+Data=as.data.frame(Data)#Finalmente le da estructura Dataframe, para volverla compatible con el código del anexo D
+
+#####################################################
+################ Para calibrar ######################
+#####################################################
+Totales=colSums(Data)
+#con una muestra aleatoria
+source(".../Paralelizado.R")
+cal=estim_cal(Data, "y", c(1,2,3), n/N, "linear", 200)#(2123-200))
+\end{lstlisting}
+
+\chapter{Otros usos del estimador por calibración}\label{anx:g}
+\begin{lstlisting}[language=R]
+	#Librerías necesarias para trabajar
+  library(icarus)	#Para la calibración
+  library(parallel) 	#Para paralelizar las operaciones
+  library(sampling)	#Para calcular las PPT
+  library(pps)		#Para tomar muestras con PPT
+  
+  Cuantile_comparsion<-function(Data, ycolname, vectaux, samplesize, mtd, alpha)
+{
+  s<-ppss(Data$factor, nrow(Data)*samplesize)
+  S=Data[s,]
+  y= unlist(S[ycolname])        #y es nuestro parámetro de interés
+  #Determinamos ahora los ponderadores por calibración
+  dimaux=ncol(Data) #Tamaño original del vector de información auxiliar
+  margins <- matrix(NA, nrow=dimaux, ncol=3)#vector completo de información auxiliar
+  for(n in 1:dimaux)#inserta todos los vectores auxiliares excepto el de los factores de exp.
+    margins[n,]<-c(colnames(S[n]), 0, Totales[n])
+  margins<- margins[vectaux,] #considera solo las columnas de la información auxiliar
+  #que están en el arreglo vectaux
+  #Realiza la calibración de ponderadores con la muestra S, la información auxiliar
+  #de margins los ponderadores iniciales de factor, por el método ingresado mtd
+  w <- calibration(data=S, marginMatrix=margins, colWeights="factor",method=mtd
+                   ,description=FALSE)
+  P=ecdf(y*S$factor)#Función de distribución empírica inducida por el estimador de H-T
+  plot(P, xlim=c(0,2.1e+08), ylim = c(0,1), col="red", main = "")
+  Q=ecdf(y*w)#Función de distribución empírica inducida por el estimador por calibración
+  par(new=TRUE)
+  plot(Q, xlim=c(0,2.1e+08), ylim = c(0,1), col=rgb(0,0.3094340,0.5849057) ,main = "Distribuciones empíricas")#
+  legend("bottomright",c("H-T","Calibrado"),fill=c("red",rgb(0,0.3094340,0.5849057)))
+  return(c(  quantile(P,alpha, type = 1),quantile(Q,alpha, type = 1)))
+}
+
+#2 FASES
+fases<-function(Data, ycolname, vectaux1, vectaux2, size1, size2, mtd)
+{
+  if(size2>size1)
+  {
+    warning("S2 debe estar contenida en S1, así que debe ser menor")
+    return(0)
+  }
+  vectaux=c(vectaux1,vectaux2)#Mezcla la información auxiliar completa
+  s1<-ppss(Data$factor, nrow(Data)*size1)
+  S1=Data[s1,]#La primera fase de muestreo
+  
+  dimaux=ncol(Data) #Tamaño original del vector de información auxiliar
+  margins <- matrix(NA, nrow=dimaux, ncol=3)#vector completo de información auxiliar
+  for(n in 1:dimaux)#inserta todos los vectores auxiliares excepto el de los factores de exp.
+    margins[n,]<-c(colnames(Data[n]), 0, Totales[n])
+  margins<- margins[vectaux,] #considera solo las columnas de la información auxiliar
+  #que están en el arreglo vectaux
+  #Realiza la calibración de ponderadores con la muestra S, la información auxiliar
+  #de margins los ponderadores iniciales de factor, por el método ingresado mtd
+  w1<- calibration(data=S1, marginMatrix=margins[-vectaux2,], colWeights="factor",method=mtd
+                   ,description=FALSE)
+ #Los ponderadores w1 fueron calibrados solo respecto a vectaux1, la información obtenida en la primera fase de muestreo.
+
+  s2<-ppss(S1$factor, nrow(Data)*size2)#Toma submuestra ppt de S1 
+  S2=Data[s1[s2],]#La segunda fase de muestreo
+  S2$w1=w1[s2]
+  y=unlist(S2[ycolname])
+  
+  #Agrega las marginales de las variables x2
+  for (i in length(vectaux1):length(vectaux2))
+    margins[i,3]=weightedTotal(S2[,vectaux[i]],S2$w1)
+  
+  w<- calibration(data=S2, marginMatrix=margins, colWeights="w1",method=mtd
+                  ,description=FALSE)
+  #En w se incorpora la información de la segunda fase
+  print(summary(S2$factor))
+  print(summary(S2$w1))
+  print(summary(w))  
+  Y_HT=weightedTotal(y,S2$factor)
+  Y_cal=weightedTotal(y,S2$w1)
+  Y_cal2=weightedTotal(y,w)
+  print(c(Y_HT,Y_cal, Y_cal2))
+  return(Y_cal2)
+}
+
+######Programa
+Data=BaseDatos()
+Totales=colSums(Data)
+
+InfAux<-c(1,4,9,78)
+Cuantile_comparsion(Data, "ing_cor", InfAux, 0.001, "linear", c(0.025,0.5,0.975))
+
+fases(Data, "ing_cor", InfAux[-c(2,3)], InfAux[c(2,3)], 0.002, 0.001, "linear")
+
+\end{lstlisting}
+%%%%%%%%%%%%%%%%%%  Bibliografía  %%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{referencias}
+\bibliographystyle{apalike-es}%apalike%Estilo de bibliografia
+\hypertarget{bib}{}
+
+%\printbibliography
+
+%Pendiente agregar CUALITATIVAS O CUANTITATIVAS
+\end{document}
+%%%%%%%%%%% 1.2coment arising?? presentando bibliografia previa
+%[2.  Basic conditions for design­based estimation  in sample surveys ]
+%4.  The calibration approach to estimation
+%5
+%6.  Calibration estimation for more  complex parameters 
+%Calibration estimation in the presence  of composite information ----es de aplicaciones chiditas
+%9- para no respuesta :D , ¿junto con el 10?
+
+%7.  Calibration contrasted with other approaches, meto los teoremas de Wu??
+%simulación/// aplicación a la encuesta de
+%conclusiones y recomendaciones
+
+
+%computacionalmente... existe?
